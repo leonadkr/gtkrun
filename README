@@ -1,0 +1,9 @@
+gtkrun is a program launcher for X (Wayland and others supported by Gtk4). In functionality it is similar to 'grun', but uses Gtk4.
+
+You need cmake to build it.
+
+To build:
+cmake -S gtkrun -B /tmp/gtkrun/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_TOOLCHAIN_FILE=GlibToolChain.cmake
+
+To install:
+DESTDIR=$HOME/.local cmake --build /tmp/gtkrun/release --config Release --target install
