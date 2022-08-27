@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include "path.h"
+#include "config.h"
 
 struct _GrEditablePrivate
 {
@@ -8,7 +9,9 @@ struct _GrEditablePrivate
 	gulong delete_text_handler_id;
 	guint insert_text_signal_id;
 	guint delete_text_signal_id;
-	GList *filename_list;
+	gchar *cache_filepath;
+	GList *env_filename_list;
+	GList *cache_filename_list;
 };
 typedef struct _GrEditablePrivate GrEditablePrivate;
 
@@ -24,7 +27,9 @@ gr_editable_private_free(
 {
 	g_return_if_fail( priv != NULL );
 
-	g_list_free_full( priv->filename_list, (GDestroyNotify)g_free );
+	g_free( priv->cache_filepath );
+	g_list_free_full( priv->cache_filename_list, (GDestroyNotify)g_free );
+	g_list_free_full( priv->env_filename_list, (GDestroyNotify)g_free );
 	g_free( priv );
 }
 
@@ -42,7 +47,9 @@ gr_editable_private_new(
 	priv->delete_text_handler_id = 0;
 	priv->insert_text_signal_id = 0;
 	priv->delete_text_signal_id = 0;
-	priv->filename_list = NULL;
+	priv->cache_filepath = NULL;
+	priv->cache_filename_list = NULL;
+	priv->env_filename_list = NULL;
 
 	g_object_set_qdata_full( G_OBJECT( self ), gr_editable_private_quark(), priv, (GDestroyNotify)gr_editable_private_free );
 
@@ -59,6 +66,16 @@ gr_editable_get_private(
 }
 
 static void
+print_elem(
+	gpointer data,
+	gpointer user_data )
+{
+	g_return_if_fail( data != NULL );
+
+	g_print( "%s\n", (gchar*)data );
+}
+
+static void
 gr_editable_set_compared_text(
 	GtkEditable *self,
 	gint position )
@@ -66,19 +83,20 @@ gr_editable_set_compared_text(
 	const gchar *text;
 
 	GrEditablePrivate *priv;
-	GList *compare_list;
+	GList *list;
 
 	g_return_if_fail( GTK_IS_EDITABLE( self ) );
 
 	priv = gr_editable_get_private( self );
 	text = gtk_editable_get_chars( self, 0, position );
-	compare_list = gr_path_get_compare_list( priv->filename_list, text );
+	list = gr_path_get_compared_list( priv->cache_filename_list, text );
+	list = g_list_concat( list, gr_path_get_compared_list( priv->env_filename_list, text ) );
 
-	if( compare_list != NULL )
-		gtk_editable_set_text( self, (gchar*)g_list_first( compare_list )->data );
+	if( list != NULL )
+		gtk_editable_set_text( self, (gchar*)g_list_first( list )->data );
 	gtk_editable_set_position( self, position );
 
-	g_list_free_full( compare_list, (GDestroyNotify)g_free );
+	g_list_free_full( list, (GDestroyNotify)g_free );
 }
 
 static void
@@ -143,6 +161,8 @@ on_event_key_pressed(
 	GtkEditable *editable = GTK_EDITABLE( user_data );
 	GrEditablePrivate *priv = gr_editable_get_private( editable );
 	GSubprocess *subproc;
+	GList *l;
+	gboolean is_command_in_cache;
 	GError *error = NULL;
 
 	if( keyval == GDK_KEY_Return )
@@ -162,6 +182,18 @@ on_event_key_pressed(
 		}
 		else
 			g_object_unref( G_OBJECT( subproc ) );
+		
+		/* if command is new, then store it to cache */
+		is_command_in_cache = FALSE;
+		for( l = priv->cache_filename_list; l != NULL; l = l->next )
+			if( g_strcmp0( (gchar*)l->data, command ) == 0 )
+			{
+				is_command_in_cache = TRUE;
+				break;
+			}
+		if( !is_command_in_cache )
+			gr_path_store_command_to_cache( priv->cache_filepath, command );
+
 		gtk_window_destroy( priv->window );
 
 		return FALSE;
@@ -195,7 +227,9 @@ gr_entry_new(
 	priv->delete_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "delete-text", G_CALLBACK( on_editable_delete_text ), window );
 	priv->insert_text_signal_id = g_signal_lookup( "insert-text", GTK_TYPE_EDITABLE );
 	priv->delete_text_signal_id = g_signal_lookup( "delete-text", GTK_TYPE_EDITABLE );
-	priv->filename_list = gr_path_get_filename_list();
+	priv->cache_filepath = g_build_filename( g_get_user_cache_dir(), PROGRAM_NAME, CACHE_FILENAME, NULL );
+	priv->cache_filename_list = gr_path_get_filename_list_from_cache( priv->cache_filepath );
+	priv->env_filename_list = gr_path_get_filename_list_from_env( PATH_ENV );
 
 	/* event handler */
 	event_key = GTK_EVENT_CONTROLLER_KEY( gtk_event_controller_key_new() );
