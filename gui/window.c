@@ -2,9 +2,7 @@
 #include "config.h"
 #include "entry.h"
 
-/*
-	private
-*/
+
 static gboolean
 on_event_key_pressed(
 	GtkEventControllerKey *self,
@@ -26,9 +24,6 @@ on_event_key_pressed(
 }
 
 
-/*
-	public
-*/
 GtkWindow*
 gr_window_new(
 	GApplication *app )

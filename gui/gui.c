@@ -2,9 +2,7 @@
 #include "config.h"
 #include "window.h"
 
-/*
-	private
-*/
+
 static void
 on_app_startup(
 	GApplication *self,
@@ -29,9 +27,6 @@ on_app_activate(
 }
 
 
-/*
-	public
-*/
 gint
 gui_start(
 	gint argc,

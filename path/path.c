@@ -2,9 +2,7 @@
 #include <gio/gio.h>
 #include "config.h"
 
-/*
-	private
-*/
+
 static GList*
 gr_path_prepend_filename_list(
 	GList *filename_list,
@@ -65,9 +63,6 @@ out1:
 }
 
 
-/*
-	public
-*/
 GList*
 gr_path_get_compared_list(
 	GList *filename_list,

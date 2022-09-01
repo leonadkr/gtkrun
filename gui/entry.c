@@ -2,9 +2,11 @@
 #include "path.h"
 #include "config.h"
 
+
 struct _GrEditablePrivate
 {
 	GtkWindow *window;
+	GtkEntry *entry;
 	gulong insert_text_handler_id;
 	gulong delete_text_handler_id;
 	guint insert_text_signal_id;
@@ -16,9 +18,6 @@ struct _GrEditablePrivate
 typedef struct _GrEditablePrivate GrEditablePrivate;
 
 
-/*
-	private
-*/
 static G_DEFINE_QUARK( gr-editable-private, gr_editable_private )
 
 static void
@@ -43,6 +42,7 @@ gr_editable_private_new(
 
 	priv = g_new( GrEditablePrivate, 1 );
 	priv->window = NULL;
+	priv->entry = NULL;
 	priv->insert_text_handler_id = 0;
 	priv->delete_text_handler_id = 0;
 	priv->insert_text_signal_id = 0;
@@ -92,8 +92,14 @@ gr_editable_set_compared_text(
 	list = gr_path_get_compared_list( priv->cache_filename_list, text );
 	list = g_list_concat( list, gr_path_get_compared_list( priv->env_filename_list, text ) );
 
-	if( list != NULL )
-		gtk_editable_set_text( self, (gchar*)g_list_first( list )->data );
+	/* nothing to compare */
+	if( list == NULL )
+		return;
+
+	g_list_foreach( list, (GFunc)print_elem, NULL );
+	g_print( "\n" );
+
+	gtk_editable_set_text( self, (gchar*)g_list_first( list )->data );
 	gtk_editable_set_position( self, position );
 
 	g_list_free_full( list, (GDestroyNotify)g_free );
@@ -148,6 +154,50 @@ on_editable_delete_text(
 	g_signal_stop_emission( G_OBJECT( self ), priv->delete_text_signal_id, 0 );
 }
 
+static void
+gr_editable_store_cache(
+	GtkEditable *self )
+{
+	const gchar *command;
+
+	GrEditablePrivate *priv;
+	GSubprocess *subproc;
+	GList *l;
+	gboolean is_command_in_cache;
+	GError *error = NULL;
+
+	g_return_if_fail( GTK_IS_EDITABLE( self ) );
+
+	priv = gr_editable_get_private( self );
+
+	command = gtk_editable_get_text( self );
+	subproc = g_subprocess_new(
+		G_SUBPROCESS_FLAGS_NONE,
+		&error,
+		command,
+		NULL );
+	if( error != NULL )
+	{
+		g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+			"MESSAGE", error->message,
+			NULL );
+		g_clear_error( &error );
+	}
+	else
+		g_object_unref( G_OBJECT( subproc ) );
+
+	/* if command is new, then store it to cache */
+	is_command_in_cache = FALSE;
+	for( l = priv->cache_filename_list; l != NULL; l = l->next )
+		if( g_strcmp0( (gchar*)l->data, command ) == 0 )
+		{
+			is_command_in_cache = TRUE;
+			break;
+		}
+	if( !is_command_in_cache )
+		gr_path_store_command_to_cache( priv->cache_filepath, command );
+}
+
 static gboolean
 on_event_key_pressed(
 	GtkEventControllerKey *self,
@@ -156,55 +206,19 @@ on_event_key_pressed(
 	GdkModifierType state,
 	gpointer user_data )
 {
-	const gchar *command;
-
 	GtkEditable *editable = GTK_EDITABLE( user_data );
 	GrEditablePrivate *priv = gr_editable_get_private( editable );
-	GSubprocess *subproc;
-	GList *l;
-	gboolean is_command_in_cache;
-	GError *error = NULL;
 
 	if( keyval == GDK_KEY_Return )
 	{
-		command = gtk_editable_get_text( editable );
-		subproc = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_NONE,
-			&error,
-			command,
-			NULL );
-		if( error != NULL )
-		{
-			g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-				"MESSAGE", error->message,
-				NULL );
-			g_clear_error( &error );
-		}
-		else
-			g_object_unref( G_OBJECT( subproc ) );
-		
-		/* if command is new, then store it to cache */
-		is_command_in_cache = FALSE;
-		for( l = priv->cache_filename_list; l != NULL; l = l->next )
-			if( g_strcmp0( (gchar*)l->data, command ) == 0 )
-			{
-				is_command_in_cache = TRUE;
-				break;
-			}
-		if( !is_command_in_cache )
-			gr_path_store_command_to_cache( priv->cache_filepath, command );
-
+		gr_editable_store_cache( editable );
 		gtk_window_destroy( priv->window );
-
-		return FALSE;
+		return GDK_EVENT_STOP;
 	}
 
-	return FALSE;
+	return GDK_EVENT_PROPAGATE;
 }
 
-/*
-	public
-*/
 GtkEntry*
 gr_entry_new(
 	GtkWindow *window )
@@ -223,6 +237,7 @@ gr_entry_new(
 	editable = gtk_editable_get_delegate( GTK_EDITABLE( entry ) );
 	priv = gr_editable_private_new( editable );
 	priv->window = window;
+	priv->entry = entry;
 	priv->insert_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "insert-text", G_CALLBACK( on_editable_insert_text ), window );
 	priv->delete_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "delete-text", G_CALLBACK( on_editable_delete_text ), window );
 	priv->insert_text_signal_id = g_signal_lookup( "insert-text", GTK_TYPE_EDITABLE );
