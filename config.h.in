@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define CACHE_FILENAME "cache"
-#define PATH_ENV "PATH"
+#define PATHENV "PATH"
 #define PROGRAM_NAME "@PROGRAM_NAME@"
 #define APP_ID "com.gmail.leonadkr.gtkrun"
 

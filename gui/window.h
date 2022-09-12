@@ -1,7 +1,11 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-GtkWindow* gr_window_new( GApplication *app );
+#include <glib.h>
+#include <gtk/gtk.h>
+#include "path.h"
+
+GtkWindow* gr_window_new( GApplication *app, GrPath *path );
 
 #endif
 
