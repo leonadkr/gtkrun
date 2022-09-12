@@ -332,7 +332,8 @@ gr_path_get_compared_list(
 	GrPath *self,
 	const gchar *text )
 {
-	GList *filename_list = NULL;
+	GList *cache_list, *env_list;
+	GList *l, *exclist;
 
 	g_return_val_if_fail( GR_IS_PATH( self ), NULL );
 
@@ -340,10 +341,21 @@ gr_path_get_compared_list(
 	if( text == NULL )
 		return NULL;
 
-	filename_list = get_compared_list( self->cache_filename_list, text );
-	filename_list = g_list_concat( filename_list, get_compared_list( self->env_filename_list, text ) );
+	cache_list = get_compared_list( self->cache_filename_list, text );
+	env_list = get_compared_list( self->env_filename_list, text );
 
-	return filename_list;
+	/* remove dublicates from cache_list and env_list */
+	for( l = cache_list; l != NULL; l = l->next )
+		while( TRUE )
+		{
+			exclist = g_list_find_custom( env_list, l->data, (GCompareFunc)g_strcmp0 );
+			if( exclist == NULL )
+				break;
+			env_list = g_list_remove_link( env_list, exclist );
+			g_list_free_full( exclist, (GDestroyNotify)g_free );
+		}
+
+	return g_list_concat( cache_list, env_list );
 }
 
 void
