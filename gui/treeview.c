@@ -106,6 +106,7 @@ gr_tree_view_new(
 	gtk_tree_view_set_grid_lines( tree_view, GTK_TREE_VIEW_GRID_LINES_NONE );
 	gtk_tree_view_set_headers_visible( tree_view, FALSE );
 	gtk_tree_view_set_enable_search( tree_view, FALSE );
+	gtk_tree_view_set_show_expanders( tree_view, FALSE );
 
 	/* event handler */
 	event_key = GTK_EVENT_CONTROLLER_KEY( gtk_event_controller_key_new() );
