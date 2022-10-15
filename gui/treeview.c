@@ -1,13 +1,13 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include "treeview.h"
-#include "path.h"
+#include "shared.h"
 
 
 struct _GrTreeViewPrivate
 {
 	GtkWindow *window;
-	GrPath *path;
+	GrShared *shared;
 };
 typedef struct _GrTreeViewPrivate GrTreeViewPrivate;
 
@@ -33,7 +33,7 @@ gr_tree_view_private_new(
 
 	priv = g_new( GrTreeViewPrivate, 1 );
 	priv->window = NULL;
-	priv->path = NULL;
+	priv->shared = NULL;
 
 	g_object_set_qdata_full( G_OBJECT( self ), gr_tree_view_private_quark(), priv, (GDestroyNotify)gr_tree_view_private_free );
 
@@ -70,8 +70,8 @@ on_event_key_pressed(
 		if( gtk_tree_selection_get_selected( tree_selection, &model, &iter ) )
 		{
 			gtk_tree_model_get( model, &iter, 0, &command, -1 );
-			gr_path_system_call( priv->path, command );
-			gr_path_store_command_to_cache( priv->path, command );
+			gr_shared_system_call( priv->shared, command );
+			gr_shared_store_command_to_cache( priv->shared, command );
 			g_free( command );
 
 			gtk_window_destroy( priv->window );
@@ -87,7 +87,7 @@ on_event_key_pressed(
 GtkTreeView*
 gr_tree_view_new(
 	GtkWindow *window,
-	GrPath *path )
+	GrShared *shared )
 {
 	GrTreeViewPrivate *priv;
 	GtkTreeView *tree_view;
@@ -96,7 +96,7 @@ gr_tree_view_new(
 	GtkTreeViewColumn *column;
 
 	g_return_val_if_fail( GTK_IS_WINDOW( window ), NULL );
-	g_return_val_if_fail( GR_IS_PATH( path ), NULL );
+	g_return_val_if_fail( shared != NULL, NULL );
 
 	/* create tree view */
 	tree_view = GTK_TREE_VIEW( gtk_tree_view_new() );
@@ -116,7 +116,7 @@ gr_tree_view_new(
 	/* collect private */
 	priv = gr_tree_view_private_new( tree_view );
 	priv->window = window;
-	priv->path = path;
+	priv->shared = shared;
 
 	return tree_view;
 }
@@ -138,7 +138,7 @@ gr_tree_view_set_model_by_text(
 		return;
 
 	priv = gr_tree_view_get_private( self );
-	list = gr_path_get_compared_list( priv->path, text );
+	list = gr_shared_get_compared_list( priv->shared, text );
 
 	/* nothing to insert */
 	if( list == NULL )

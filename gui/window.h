@@ -3,9 +3,9 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include "path.h"
+#include "shared.h"
 
-GtkWindow* gr_window_new( GApplication *app, GrPath *path );
+GtkWindow* gr_window_new( GApplication *app, GrShared *shared );
 
 #endif
 

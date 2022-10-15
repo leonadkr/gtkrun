@@ -1,7 +1,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include "entry.h"
-#include "path.h"
+#include "shared.h"
 
 
 struct _GrEditablePrivate
@@ -11,7 +11,7 @@ struct _GrEditablePrivate
 	guint insert_text_signal_id;
 	guint delete_text_signal_id;
 	GtkWindow *window;
-	GrPath *path;
+	GrShared *shared;
 };
 typedef struct _GrEditablePrivate GrEditablePrivate;
 
@@ -41,7 +41,7 @@ gr_editable_private_new(
 	priv->insert_text_signal_id = 0;
 	priv->delete_text_signal_id = 0;
 	priv->window = NULL;
-	priv->path = NULL;
+	priv->shared = NULL;
 
 	g_object_set_qdata_full( G_OBJECT( self ), gr_editable_private_quark(), priv, (GDestroyNotify)gr_editable_private_free );
 
@@ -71,7 +71,7 @@ gr_editable_set_compared_text(
 	priv = gr_editable_get_private( self );
 
 	text = gtk_editable_get_chars( self, 0, position );
-	list = gr_path_get_compared_list( priv->path, text );
+	list = gr_shared_get_compared_list( priv->shared, text );
 	g_free( text );
 
 	/* nothing to insert */
@@ -149,8 +149,8 @@ on_event_key_pressed(
 	if( keyval == GDK_KEY_Return )
 	{
 		command = gtk_editable_get_text( editable );
-		gr_path_system_call( priv->path, command );
-		gr_path_store_command_to_cache( priv->path, command );
+		gr_shared_system_call( priv->shared, command );
+		gr_shared_store_command_to_cache( priv->shared, command );
 		gtk_window_destroy( priv->window );
 		return GDK_EVENT_STOP;
 	}
@@ -162,7 +162,7 @@ on_event_key_pressed(
 GtkEntry*
 gr_entry_new(
 	GtkWindow *window,
-	GrPath *path )
+	GrShared *shared )
 {
 	GtkEntry *entry;
 	GtkEditable *editable;
@@ -170,7 +170,7 @@ gr_entry_new(
 	GrEditablePrivate *priv;
 
 	g_return_val_if_fail( GTK_IS_WINDOW( window ), NULL );
-	g_return_val_if_fail( GR_IS_PATH( path ), NULL );
+	g_return_val_if_fail( shared != NULL, NULL );
 
 	/* create entry */
 	entry = GTK_ENTRY( gtk_entry_new() );
@@ -183,7 +183,7 @@ gr_entry_new(
 	priv->insert_text_signal_id = g_signal_lookup( "insert-text", GTK_TYPE_EDITABLE );
 	priv->delete_text_signal_id = g_signal_lookup( "delete-text", GTK_TYPE_EDITABLE );
 	priv->window = window;
-	priv->path = path;
+	priv->shared = shared;
 
 	/* event handler */
 	event_key = GTK_EVENT_CONTROLLER_KEY( gtk_event_controller_key_new() );

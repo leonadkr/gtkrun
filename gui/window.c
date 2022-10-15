@@ -2,13 +2,9 @@
 #include <gtk/gtk.h>
 #include "config.h"
 #include "window.h"
-#include "path.h"
+#include "shared.h"
 #include "entry.h"
 #include "treeview.h"
-
-
-#define DEFAULT_WIDTH 400
-#define DEFAULT_HEIGHT 400
 
 
 struct _GrWindowPrivate
@@ -16,7 +12,6 @@ struct _GrWindowPrivate
 	GtkEntry *entry;
 	GtkTreeView *tree_view;
 	GtkScrolledWindow *scrolled_window;
-	GtkBox *box;
 	gboolean is_entry_visible;
 };
 typedef struct _GrWindowPrivate GrWindowPrivate;
@@ -45,7 +40,6 @@ gr_window_private_new(
 	priv->entry = NULL;
 	priv->tree_view = NULL;
 	priv->scrolled_window = NULL;
-	priv->box = NULL;
 	priv->is_entry_visible = TRUE;
 
 	g_object_set_qdata_full( G_OBJECT( self ), gr_window_private_quark(), priv, (GDestroyNotify)gr_window_private_free );
@@ -90,9 +84,10 @@ on_event_key_pressed(
 			gr_tree_view_set_model_by_text( priv->tree_view, text );
 			g_free( text );
 
-			gtk_widget_hide( GTK_WIDGET( priv->entry ) );
 			adj = gtk_scrolled_window_get_hadjustment( priv->scrolled_window );
 			gtk_adjustment_set_value( adj, gtk_adjustment_get_lower( adj ) );
+
+			gtk_widget_hide( GTK_WIDGET( priv->entry ) );
 			gtk_widget_show( GTK_WIDGET( priv->scrolled_window ) );
 		}
 		else
@@ -113,11 +108,13 @@ on_event_key_pressed(
 
 static GtkScrolledWindow*
 gr_scrolled_window_new(
-	GtkWindow *window )
+	GtkWindow *window,
+	GrShared *shared )
 {
 	GtkScrolledWindow *scrolled_window;
 
 	g_return_val_if_fail( GTK_IS_WINDOW( window ), NULL );
+	g_return_val_if_fail( shared != NULL, NULL );
 
 	scrolled_window = GTK_SCROLLED_WINDOW( gtk_scrolled_window_new() );
 	gtk_scrolled_window_set_policy( scrolled_window, GTK_POLICY_NEVER, GTK_POLICY_ALWAYS );
@@ -125,7 +122,15 @@ gr_scrolled_window_new(
 	gtk_scrolled_window_set_kinetic_scrolling( scrolled_window, FALSE );
 	gtk_scrolled_window_set_overlay_scrolling( scrolled_window, FALSE );
 	gtk_scrolled_window_set_propagate_natural_height( scrolled_window, TRUE );
-	gtk_scrolled_window_set_max_content_height( scrolled_window, DEFAULT_HEIGHT );
+
+	/* if max-height is set -- height is ignored */
+	if( shared->max_height_set )
+		gtk_scrolled_window_set_max_content_height( scrolled_window, shared->max_height );
+	else
+	{
+		gtk_scrolled_window_set_min_content_height( scrolled_window, shared->height );
+		gtk_scrolled_window_set_max_content_height( scrolled_window, shared->height );
+	}
 
 	return scrolled_window;
 }
@@ -134,7 +139,7 @@ gr_scrolled_window_new(
 GtkWindow*
 gr_window_new(
 	GApplication *app,
-	GrPath *path )
+	GrShared *shared )
 {
 	GrWindowPrivate *priv;
 	GtkWindow *window;
@@ -145,14 +150,14 @@ gr_window_new(
 	GtkEventControllerKey *event_key;
 
 	g_return_val_if_fail( G_IS_APPLICATION( app ), NULL );
-	g_return_val_if_fail( GR_IS_PATH( path ), NULL );
+	g_return_val_if_fail( shared != NULL, NULL );
 
 	/* create window */
 	window = GTK_WINDOW( gtk_application_window_new( GTK_APPLICATION( app ) ) );
 	gtk_window_set_title( window, PROGRAM_NAME );
 	gtk_window_set_resizable( window, FALSE );
 	gtk_window_set_decorated( window, FALSE );
-	gtk_window_set_default_size( window, DEFAULT_WIDTH, -1 );
+	gtk_window_set_default_size( window, shared->width, -1 );
 
 	/* bind event callback */
 	event_key = GTK_EVENT_CONTROLLER_KEY( gtk_event_controller_key_new() );
@@ -161,9 +166,9 @@ gr_window_new(
 
 	/* create widgets */
 	box = GTK_BOX( gtk_box_new( GTK_ORIENTATION_VERTICAL, 1 ) );
-	entry = gr_entry_new( window, path );
-	scrolled_window = gr_scrolled_window_new( window );
-	tree_view = gr_tree_view_new( window, path );
+	entry = gr_entry_new( window, shared );
+	scrolled_window = gr_scrolled_window_new( window, shared );
+	tree_view = gr_tree_view_new( window, shared );
 	gtk_widget_hide( GTK_WIDGET( scrolled_window ) );
 
 	/* layout widgets */
@@ -177,7 +182,6 @@ gr_window_new(
 	priv->entry = entry;
 	priv->tree_view = tree_view;
 	priv->scrolled_window = scrolled_window;
-	priv->box = box;
 	priv->is_entry_visible = TRUE;
 
 	return window;

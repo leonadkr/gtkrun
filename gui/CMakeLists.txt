@@ -8,8 +8,7 @@ add_library( ${PROJECT_NAME}
 	STATIC
 	entry.c
 	treeview.c
-	window.c
-	gui.c )
+	window.c )
 
 set_target_properties( ${PROJECT_NAME} PROPERTIES
 	C_STANDARD 11
@@ -31,4 +30,4 @@ target_link_libraries( ${PROJECT_NAME}
 	PRIVATE
 	${GLIB2_LIBRARIES}
 	${GTK4_LIBRARIES}
-	path )
+	shared )

@@ -2,7 +2,11 @@
 #define CONFIG_H
 
 #define CACHE_FILENAME "cache"
+#define CONFIG_FILENAME "config"
 #define PATHENV "PATH"
+#define DEFAULT_WINDOW_WIDTH 400
+#define DEFAULT_WINDOW_HEIGHT 400
+#define DEFAULT_WINDOW_MAX_HEIGHT DEFAULT_WINDOW_HEIGHT
 #define PROGRAM_NAME "@PROGRAM_NAME@"
 #define APP_ID "com.gmail.leonadkr.gtkrun"
 

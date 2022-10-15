@@ -3,9 +3,9 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include "path.h"
+#include "shared.h"
 
-GtkEntry* gr_entry_new( GtkWindow *window, GrPath *path );
+GtkEntry* gr_entry_new( GtkWindow *window, GrShared *shared );
 gchar* gr_entry_get_text_before_cursor( GtkEntry *self );
 void gr_entry_set_text( GtkEntry *self, const gchar* text );
 

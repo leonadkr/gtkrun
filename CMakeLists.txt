@@ -8,6 +8,6 @@ include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 add_compile_options( "-Wall" "-pedantic" )
 
+add_subdirectory( shared )
 add_subdirectory( gui )
-add_subdirectory( path )
 add_subdirectory( main )
