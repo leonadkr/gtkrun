@@ -14,19 +14,6 @@
 For example"
 
 
-static const GOptionEntry gr_option_entries[]=
-{
-	{ "silent", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not show output", NULL },
-	{ "width", 'w', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window width", "WIDTH" },
-	{ "height", 'h', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window height", "HEIGHT" },
-	{ "max-height", 'm', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window maximum height", "MAX_HEIGHT" },
-	{ "cache", 'a', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to cache file", "CACHE_FILEPATH" },
-	{ "no-cache", 'A', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use cache file", NULL },
-	{ "config", 'o', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to configure file", "CACHE_FILEPATH" },
-	{ "no-config", 'O', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use configure file", NULL },
-	{ NULL }
-};
-
 static gboolean
 parse_config(
 	gchar *config_filepath,
@@ -325,6 +312,18 @@ main(
 	GApplication *app;
 	GrShared *shared;
 	gint ret;
+	const GOptionEntry entries[]=
+	{
+		{ "silent", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not show output", NULL },
+		{ "width", 'w', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window width", "WIDTH" },
+		{ "height", 'h', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window height", "HEIGHT" },
+		{ "max-height", 'm', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window maximum height", "MAX_HEIGHT" },
+		{ "cache", 'a', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to cache file", "CACHE_FILEPATH" },
+		{ "no-cache", 'A', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use cache file", NULL },
+		{ "config", 'o', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to configure file", "CACHE_FILEPATH" },
+		{ "no-config", 'O', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use configure file", NULL },
+		{ NULL }
+	};
 
 	g_return_val_if_fail( g_application_id_is_valid( APP_ID ), EXIT_FAILURE );
 
@@ -346,7 +345,7 @@ main(
 	shared->cache_filename_list = NULL;
 	shared->env_filename_list = NULL;
 
-	g_application_add_main_option_entries( app, gr_option_entries );
+	g_application_add_main_option_entries( app, entries );
 	g_application_set_option_context_summary( app, PROGRAM_SUMMARY );
 	g_object_set_data_full( G_OBJECT( app ), "shared", shared, (GDestroyNotify)gr_shared_free );
 
