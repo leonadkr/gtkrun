@@ -8,10 +8,7 @@
 #include "window.h"
 
 
-#define PROGRAM_SUMMARY \
-"This program does something\
-\n\
-For example"
+#define PROGRAM_SUMMARY "This program launches applications in a graphical environment supported by GTK4"
 
 
 static gboolean
