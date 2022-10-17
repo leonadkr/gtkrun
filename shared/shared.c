@@ -5,15 +5,16 @@
 
 static GList*
 get_compared_list(
-	GList *filename_list,
+	GPtrArray *filenames,
 	const gchar *text )
 {
 	gchar *s;
-	GList *l, *compared_list;
+	guint i;
+	GList *compared_list;
 	gint text_len;
 
 	/* nothing to do */
-	if( filename_list == NULL || text == NULL )
+	if( filenames == NULL || text == NULL )
 		return NULL;
 
 	text_len = strlen( text );
@@ -21,9 +22,9 @@ get_compared_list(
 		return NULL;
 
 	compared_list = NULL;
-	for( l = filename_list; l != NULL; l = l->next )
+	for( i = 0; i < filenames->len; ++i )
 	{
-		s = (gchar*)l->data;
+		s = (gchar*)filenames->pdata[i];
 		if( g_strstr_len( s, text_len, text ) != NULL )
 			compared_list = g_list_prepend( compared_list, g_strdup( s ) );
 	}
@@ -41,20 +42,22 @@ duplicate_string(
 	return g_strdup( str );
 }
 
-static GList*
-prepend_filename_list(
-	GList *filename_list,
-	gchar *dirname )
+static void
+filename_array_add_from_path(
+	GPtrArray *filenames,
+	gchar *dirname,
+	GError **error )
 {
 	GFile *dir;
 	GFileEnumerator *direnum;
 	GFileInfo *fileinfo;
-	GList *fn_list, *ret;
-	GError *error = NULL;
+	GError *error_loc = NULL;
+
+	g_return_if_fail( filenames != NULL );
 
 	/* nothing to do */
 	if( dirname == NULL )
-		return NULL;
+		return;
 
 	dir = g_file_new_for_path( dirname );
 	direnum = g_file_enumerate_children(
@@ -62,64 +65,55 @@ prepend_filename_list(
 		G_FILE_ATTRIBUTE_STANDARD_NAME,
 		G_FILE_QUERY_INFO_NONE,
 		NULL,
-		&error );
-	if( error != NULL )
+		&error_loc );
+	if( error_loc != NULL )
 	{
-		g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-			"MESSAGE", error->message,
-			NULL );
-		g_clear_error( &error );
-		ret = filename_list;
+		g_propagate_error( error, error_loc );
 		goto out1;
 	}
 
-	fn_list = NULL;
 	while( TRUE )
 	{
-		g_file_enumerator_iterate( direnum, &fileinfo, NULL, NULL, &error );
-		if( error != NULL )
+		g_file_enumerator_iterate( direnum, &fileinfo, NULL, NULL, &error_loc );
+		if( error_loc != NULL )
 		{
-			g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-				"MESSAGE", error->message,
-				NULL );
-			g_clear_error( &error );
-			g_list_free_full( fn_list, (GDestroyNotify)g_free );
-			ret = filename_list;
+			g_propagate_error( error, error_loc );
 			goto out2;
 		}
 
 		if( fileinfo == NULL )
 			break;
 
-		fn_list = g_list_prepend( fn_list, g_strdup( g_file_info_get_name( fileinfo ) ) );
+		g_ptr_array_add( filenames, g_strdup( g_file_info_get_name( fileinfo ) ) );
 	}
-	ret = g_list_concat( fn_list, filename_list );
 
 out2:
 	g_object_unref( G_OBJECT( direnum ) );
 
 out1:
 	g_object_unref( G_OBJECT( dir ) );
-
-	return ret;
 }
 
 GrShared*
 gr_shared_new(
 	void )
 {
+	const guint array_size = 4096;
+
 	GrShared *self = g_new0( GrShared, 1 );
+
 	self->silent = FALSE;
 	self->width = 0;
 	self->height = 0;
 	self->max_height = 0;
+	self->max_height_set = FALSE;
 	self->cache_filepath = NULL;
 	self->no_cache = FALSE;
 	self->config_filepath = NULL;
 	self->no_config = FALSE;
-	self->max_height_set = FALSE;
-	self->env_filename_list = NULL;
-	self->cache_filename_list = NULL;
+
+	self->env_filenames = g_ptr_array_new_full( array_size, (GDestroyNotify)g_free );
+	self->cache_filenames = g_ptr_array_new_full( array_size, (GDestroyNotify)g_free );
 
 	return self;
 }
@@ -132,8 +126,8 @@ gr_shared_free(
 
 	g_free( self->cache_filepath );
 	g_free( self->config_filepath );
-	g_list_free_full( self->env_filename_list, (GDestroyNotify)g_free );
-	g_list_free_full( self->cache_filename_list, (GDestroyNotify)g_free );
+	g_ptr_array_unref( self->env_filenames );
+	g_ptr_array_unref( self->cache_filenames );
 	g_free( self );
 }
 
@@ -150,60 +144,71 @@ gr_shared_dup(
 	shared->width = self->width;
 	shared->height = self->height;
 	shared->max_height = self->max_height;
+	shared->max_height_set = self->max_height_set;
 	shared->cache_filepath = g_strdup( self->cache_filepath );
 	shared->no_cache = self->no_cache;
 	shared->config_filepath = g_strdup( self->config_filepath );
 	shared->no_config = self->no_config;
-	shared->max_height_set = self->max_height_set;
-	shared->env_filename_list = g_list_copy_deep( self->env_filename_list, (GCopyFunc)duplicate_string, NULL );
-	shared->cache_filename_list = g_list_copy_deep( self->cache_filename_list, (GCopyFunc)duplicate_string, NULL );
+
+	shared->env_filenames = g_ptr_array_copy( self->env_filenames, (GCopyFunc)duplicate_string, NULL );
+	shared->cache_filenames = g_ptr_array_copy( self->cache_filenames, (GCopyFunc)duplicate_string, NULL );
 
 	return shared;
 }
 
-GList*
-gr_shared_get_filename_list_from_env(
+void
+gr_shared_set_filenames_from_env(
+	GrShared *self,
 	const gchar *pathenv )
 {
 	const gchar delim[] = ":";
 
 	const gchar *pathstr;
 	gchar **patharr, **arr;
-	GList *filename_list;
+	GError *error = NULL;
+
+	g_return_if_fail( self != NULL );
 
 	/* nothing to do */
 	if( pathenv == NULL )
-		return NULL;
+		return;
 
 	pathstr = g_getenv( pathenv );
 	patharr = g_strsplit( pathstr, delim, -1 );
 
-	filename_list = NULL;
 	for( arr = patharr; arr[0] != NULL; arr++ )
-		filename_list = prepend_filename_list( filename_list, arr[0] );
+	{
+		filename_array_add_from_path( self->env_filenames, arr[0], &error );
+		if( error != NULL )
+		{
+			g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+				"MESSAGE", error->message,
+				NULL );
+			g_clear_error( &error );
+		}
+	}
 	g_strfreev( patharr );
 
-	filename_list = g_list_sort( filename_list, (GCompareFunc)g_strcmp0 );
-
-	return filename_list;
+	g_ptr_array_sort( self->env_filenames, (GCompareFunc)g_strcmp0 );
 }
 
-GList*
-gr_shared_get_filename_list_from_cache(
+void
+gr_shared_set_filenames_from_cache(
+	GrShared *self,
 	gchar *cache_filepath )
 {
 	GFile *file;
 	GFileInputStream *file_stream;
 	GDataInputStream *data_stream;
-	GList *filename_list;
 	gsize size;
 	gchar *line;
-	GList *ret = NULL;
 	GError *error = NULL;
+
+	g_return_if_fail( self != NULL );
 
 	/* nothing to do */
 	if( cache_filepath == NULL )
-		return NULL;
+		return;
 
 	file = g_file_new_for_path( cache_filepath );
 	file_stream = g_file_read( file, NULL, &error );
@@ -213,12 +218,10 @@ gr_shared_get_filename_list_from_cache(
 			"MESSAGE", error->message,
 			NULL );
 		g_clear_error( &error );
-		ret = NULL;
 		goto out1;
 	}
 	data_stream = g_data_input_stream_new( G_INPUT_STREAM( file_stream ) );
 
-	filename_list = NULL;
 	while( TRUE )
 	{
 		line = g_data_input_stream_read_line( data_stream, &size, NULL, &error );
@@ -228,17 +231,14 @@ gr_shared_get_filename_list_from_cache(
 				"MESSAGE", error->message,
 				NULL );
 			g_clear_error( &error );
-			g_list_free_full( filename_list, (GDestroyNotify)g_free );
-			ret = NULL;
 			goto out2;
 		}
 
 		if( line == NULL )
 			break;
 
-		filename_list = g_list_prepend( filename_list, line );
+		g_ptr_array_add( self->cache_filenames, line );
 	}
-	ret = g_list_reverse( filename_list );
 
 out2:
 	g_object_unref( G_OBJECT( data_stream ) );
@@ -246,8 +246,6 @@ out2:
 
 out1:
 	g_object_unref( G_OBJECT( file ) );
-
-	return ret;
 }
 
 GList*
@@ -267,8 +265,8 @@ gr_shared_get_compared_list(
 	if( self->no_cache )
 		cache_list = NULL;
 	else
-		cache_list = get_compared_list( self->cache_filename_list, text );
-	env_list = get_compared_list( self->env_filename_list, text );
+		cache_list = get_compared_list( self->cache_filenames, text );
+	env_list = get_compared_list( self->env_filenames, text );
 
 	/* remove dublicates from cache_list and env_list */
 	for( l = cache_list; l != NULL; l = l->next )
@@ -289,11 +287,12 @@ gr_shared_store_command_to_cache(
 	GrShared *self,
 	const gchar *command )
 {
+	const gchar lineend[] = "\r\n";
+
 	GFile *file, *dir;
 	GFileOutputStream *file_stream;
 	GDataOutputStream *data_stream;
 	gchar *line;
-	GList *l;
 	GError *error = NULL;
 
 	g_return_if_fail( self != NULL );
@@ -303,9 +302,8 @@ gr_shared_store_command_to_cache(
 		return;
 
 	/* if command is in cache -- nothing to do */
-	for( l = self->cache_filename_list; l != NULL; l = l->next )
-		if( g_strcmp0( (gchar*)l->data, command ) == 0 )
-			return;
+	if( g_ptr_array_find_with_equal_func( self->cache_filenames, command, (GEqualFunc)g_str_equal, NULL ) )
+		return;
 
 	file = g_file_new_for_path( self->cache_filepath );
 	dir = g_file_get_parent( file );
@@ -333,7 +331,7 @@ gr_shared_store_command_to_cache(
 	}
 	data_stream = g_data_output_stream_new( G_OUTPUT_STREAM( file_stream ) );
 
-	line = g_strconcat( command, "\n", NULL );
+	line = g_strconcat( command, lineend, NULL );
 	g_data_output_stream_put_string( data_stream, line, NULL, &error );
 	g_free( line );
 	if( error != NULL )

@@ -143,8 +143,8 @@ on_app_handle_local_options(
 		shared->max_height_set = TRUE;
 
 	/* set up shared data */
-	shared->env_filename_list = gr_shared_get_filename_list_from_env( PATHENV );
-	shared->cache_filename_list = gr_shared_get_filename_list_from_cache( shared->cache_filepath );
+	gr_shared_set_filenames_from_env( shared, PATHENV );
+	gr_shared_set_filenames_from_cache( shared, shared->cache_filepath );
 
 	return -1;
 }
@@ -182,13 +182,11 @@ main(
 	shared->width = DEFAULT_WINDOW_WIDTH;
 	shared->height = DEFAULT_WINDOW_HEIGHT;
 	shared->max_height = DEFAULT_WINDOW_MAX_HEIGHT;
+	shared->max_height_set = FALSE;
 	shared->cache_filepath = g_build_filename( g_get_user_cache_dir(), PROGRAM_NAME, CACHE_FILENAME, NULL );
 	shared->no_cache = FALSE;
 	shared->config_filepath = g_build_filename( g_get_user_config_dir(), PROGRAM_NAME, CONFIG_FILENAME, NULL );
 	shared->no_config = FALSE;
-	shared->max_height_set = FALSE;
-	shared->cache_filename_list = NULL;
-	shared->env_filename_list = NULL;
 
 	g_application_add_main_option_entries( app, entries );
 	g_application_set_option_context_summary( app, PROGRAM_SUMMARY );
