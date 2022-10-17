@@ -41,6 +41,68 @@ duplicate_string(
 	return g_strdup( str );
 }
 
+static GList*
+prepend_filename_list(
+	GList *filename_list,
+	gchar *dirname )
+{
+	GFile *dir;
+	GFileEnumerator *direnum;
+	GFileInfo *fileinfo;
+	GList *fn_list, *ret;
+	GError *error = NULL;
+
+	/* nothing to do */
+	if( dirname == NULL )
+		return NULL;
+
+	dir = g_file_new_for_path( dirname );
+	direnum = g_file_enumerate_children(
+		dir,
+		G_FILE_ATTRIBUTE_STANDARD_NAME,
+		G_FILE_QUERY_INFO_NONE,
+		NULL,
+		&error );
+	if( error != NULL )
+	{
+		g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+			"MESSAGE", error->message,
+			NULL );
+		g_clear_error( &error );
+		ret = filename_list;
+		goto out1;
+	}
+
+	fn_list = NULL;
+	while( TRUE )
+	{
+		g_file_enumerator_iterate( direnum, &fileinfo, NULL, NULL, &error );
+		if( error != NULL )
+		{
+			g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+				"MESSAGE", error->message,
+				NULL );
+			g_clear_error( &error );
+			g_list_free_full( fn_list, (GDestroyNotify)g_free );
+			ret = filename_list;
+			goto out2;
+		}
+
+		if( fileinfo == NULL )
+			break;
+
+		fn_list = g_list_prepend( fn_list, g_strdup( g_file_info_get_name( fileinfo ) ) );
+	}
+	ret = g_list_concat( fn_list, filename_list );
+
+out2:
+	g_object_unref( G_OBJECT( direnum ) );
+
+out1:
+	g_object_unref( G_OBJECT( dir ) );
+
+	return ret;
+}
 
 GrShared*
 gr_shared_new(
@@ -97,6 +159,95 @@ gr_shared_dup(
 	shared->cache_filename_list = g_list_copy_deep( self->cache_filename_list, (GCopyFunc)duplicate_string, NULL );
 
 	return shared;
+}
+
+GList*
+gr_shared_get_filename_list_from_env(
+	const gchar *pathenv )
+{
+	const gchar delim[] = ":";
+
+	const gchar *pathstr;
+	gchar **patharr, **arr;
+	GList *filename_list;
+
+	/* nothing to do */
+	if( pathenv == NULL )
+		return NULL;
+
+	pathstr = g_getenv( pathenv );
+	patharr = g_strsplit( pathstr, delim, -1 );
+
+	filename_list = NULL;
+	for( arr = patharr; arr[0] != NULL; arr++ )
+		filename_list = prepend_filename_list( filename_list, arr[0] );
+	g_strfreev( patharr );
+
+	filename_list = g_list_sort( filename_list, (GCompareFunc)g_strcmp0 );
+
+	return filename_list;
+}
+
+GList*
+gr_shared_get_filename_list_from_cache(
+	gchar *cache_filepath )
+{
+	GFile *file;
+	GFileInputStream *file_stream;
+	GDataInputStream *data_stream;
+	GList *filename_list;
+	gsize size;
+	gchar *line;
+	GList *ret = NULL;
+	GError *error = NULL;
+
+	/* nothing to do */
+	if( cache_filepath == NULL )
+		return NULL;
+
+	file = g_file_new_for_path( cache_filepath );
+	file_stream = g_file_read( file, NULL, &error );
+	if( error != NULL )
+	{
+		g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+			"MESSAGE", error->message,
+			NULL );
+		g_clear_error( &error );
+		ret = NULL;
+		goto out1;
+	}
+	data_stream = g_data_input_stream_new( G_INPUT_STREAM( file_stream ) );
+
+	filename_list = NULL;
+	while( TRUE )
+	{
+		line = g_data_input_stream_read_line( data_stream, &size, NULL, &error );
+		if( error != NULL )
+		{
+			g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+				"MESSAGE", error->message,
+				NULL );
+			g_clear_error( &error );
+			g_list_free_full( filename_list, (GDestroyNotify)g_free );
+			ret = NULL;
+			goto out2;
+		}
+
+		if( line == NULL )
+			break;
+
+		filename_list = g_list_prepend( filename_list, line );
+	}
+	ret = g_list_reverse( filename_list );
+
+out2:
+	g_object_unref( G_OBJECT( data_stream ) );
+	g_object_unref( G_OBJECT( file_stream ) );
+
+out1:
+	g_object_unref( G_OBJECT( file ) );
+
+	return ret;
 }
 
 GList*
