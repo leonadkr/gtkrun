@@ -3,6 +3,9 @@
 #include "shared.h"
 
 
+#define DEFAULT_ARRAY_SIZE 4096
+
+
 static GList*
 get_compared_list(
 	GPtrArray *filenames,
@@ -98,8 +101,6 @@ GrShared*
 gr_shared_new(
 	void )
 {
-	const guint array_size = 4096;
-
 	GrShared *self = g_new0( GrShared, 1 );
 
 	self->silent = FALSE;
@@ -112,8 +113,8 @@ gr_shared_new(
 	self->config_filepath = NULL;
 	self->no_config = FALSE;
 
-	self->env_filenames = g_ptr_array_new_full( array_size, (GDestroyNotify)g_free );
-	self->cache_filenames = g_ptr_array_new_full( array_size, (GDestroyNotify)g_free );
+	self->env_filenames = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
+	self->cache_filenames = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
 
 	return self;
 }
