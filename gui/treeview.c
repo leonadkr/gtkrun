@@ -127,7 +127,9 @@ gr_tree_view_set_model_by_text(
 	const gchar* text )
 {
 	GrTreeViewPrivate *priv;
-	GList *list, *l;
+	GPtrArray *arr;
+	guint i;
+	gchar *s;
 	GtkListStore *list_store;
 	GtkTreeIter iter;
 
@@ -138,21 +140,27 @@ gr_tree_view_set_model_by_text(
 		return;
 
 	priv = gr_tree_view_get_private( self );
-	list = gr_shared_get_compared_list( priv->shared, text );
+	arr = gr_shared_get_compared_array( priv->shared, text );
 
 	/* nothing to insert */
-	if( list == NULL )
-		return;
+	if( arr->len == 0 )
+		goto out;
 
 	list_store = gtk_list_store_new( 1, G_TYPE_STRING );
-	for( l = list; l != NULL; l = l->next )
+	for( i = 0; i < arr->len; ++i )
 	{
-		gtk_list_store_append( list_store, &iter );
-		gtk_list_store_set( list_store, &iter, 0, (gchar*)l->data, -1 );
+		s = (gchar*)arr->pdata[i];
+		/* ignore NULL in sparse arr */
+		if( s != NULL )
+		{
+			gtk_list_store_append( list_store, &iter );
+			gtk_list_store_set( list_store, &iter, 0, s, -1 );
+		}
 	}
 	gtk_tree_view_set_model( self, GTK_TREE_MODEL( list_store ) );
 
-	g_list_free_full( list, (GDestroyNotify)g_free );
+out:
+	g_ptr_array_unref( arr );
 }
 
 gchar*

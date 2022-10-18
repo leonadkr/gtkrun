@@ -27,7 +27,7 @@ void gr_shared_free( GrShared *self );
 GrShared* gr_shared_dup( GrShared *self );
 void gr_shared_set_filenames_from_env( GrShared *self, const gchar *pathenv );
 void gr_shared_set_filenames_from_cache( GrShared *self, gchar *cache_filepath );
-GList* gr_shared_get_compared_list( GrShared *self, const gchar *text );
+GPtrArray* gr_shared_get_compared_array( GrShared *self, const gchar *text );
 void gr_shared_store_command_to_cache( GrShared *self, const gchar *command );
 void gr_shared_system_call( GrShared *self, const gchar* command );
 

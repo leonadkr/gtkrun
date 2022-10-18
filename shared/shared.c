@@ -6,33 +6,31 @@
 #define DEFAULT_ARRAY_SIZE 4096
 
 
-static GList*
-get_compared_list(
+static void
+set_compared_array(
+	GPtrArray *arr,
 	GPtrArray *filenames,
 	const gchar *text )
 {
-	gchar *s;
 	guint i;
-	GList *compared_list;
-	gint text_len;
+	gchar *s;
+	gssize text_len;
 
 	/* nothing to do */
 	if( filenames == NULL || text == NULL )
-		return NULL;
+		return;
 
-	text_len = strlen( text );
+	/* nothing to do */
+	text_len = (gssize)strlen( text );
 	if( text_len == 0 )
-		return NULL;
+		return;
 
-	compared_list = NULL;
 	for( i = 0; i < filenames->len; ++i )
 	{
 		s = (gchar*)filenames->pdata[i];
 		if( g_strstr_len( s, text_len, text ) != NULL )
-			compared_list = g_list_prepend( compared_list, g_strdup( s ) );
+			g_ptr_array_add( arr, g_strdup( s ) );
 	}
-
-	return g_list_reverse( compared_list );
 }
 
 static gchar*
@@ -249,38 +247,37 @@ out1:
 	g_object_unref( G_OBJECT( file ) );
 }
 
-GList*
-gr_shared_get_compared_list(
+GPtrArray*
+gr_shared_get_compared_array(
 	GrShared *self,
 	const gchar *text )
 {
-	GList *cache_list, *env_list;
-	GList *l, *exclist;
+	guint i, j;
+	gchar *si, *sj;
+	GPtrArray *arr = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
 
-	g_return_val_if_fail( self != NULL, NULL );
+	if( !self->no_cache )
+		set_compared_array( arr, self->cache_filenames, text );
+	set_compared_array( arr, self->env_filenames, text );
 
-	/* nothing to do */
-	if( text == NULL )
-		return NULL;
-
-	if( self->no_cache )
-		cache_list = NULL;
-	else
-		cache_list = get_compared_list( self->cache_filenames, text );
-	env_list = get_compared_list( self->env_filenames, text );
-
-	/* remove dublicates from cache_list and env_list */
-	for( l = cache_list; l != NULL; l = l->next )
-		while( TRUE )
+	/* replace dublicates with NULL */
+	for( i = 0; i < arr->len; ++i )
+		for( j = i + 1; j < arr->len; ++j )
 		{
-			exclist = g_list_find_custom( env_list, l->data, (GCompareFunc)g_strcmp0 );
-			if( exclist == NULL )
-				break;
-			env_list = g_list_remove_link( env_list, exclist );
-			g_list_free_full( exclist, (GDestroyNotify)g_free );
+			si = (gchar*)arr->pdata[i];
+			sj = (gchar*)arr->pdata[j];
+
+			if( si == NULL )
+				continue;
+
+			if( g_strcmp0( si, sj ) == 0 )
+			{
+				g_free( sj );
+				arr->pdata[j] = NULL;
+			}
 		}
 
-	return g_list_concat( cache_list, env_list );
+	return arr;
 }
 
 void

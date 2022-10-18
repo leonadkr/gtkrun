@@ -63,7 +63,7 @@ gr_editable_set_compared_text(
 	gint position )
 {
 	GrEditablePrivate *priv;
-	GList *list;
+	GPtrArray *arr;
 	gchar *text;
 
 	g_return_if_fail( GTK_IS_EDITABLE( self ) );
@@ -71,17 +71,18 @@ gr_editable_set_compared_text(
 	priv = gr_editable_get_private( self );
 
 	text = gtk_editable_get_chars( self, 0, position );
-	list = gr_shared_get_compared_list( priv->shared, text );
+	arr = gr_shared_get_compared_array( priv->shared, text );
 	g_free( text );
 
 	/* nothing to insert */
-	if( list == NULL )
-		return;
+	if( arr->len == 0 )
+		goto out;
 
-	gtk_editable_set_text( self, (gchar*)g_list_first( list )->data );
+	gtk_editable_set_text( self, (gchar*)arr->pdata[0] );
 	gtk_editable_set_position( self, position );
 
-	g_list_free_full( list, (GDestroyNotify)g_free );
+out:
+	g_ptr_array_unref( arr );
 }
 
 static void
