@@ -1,3 +1,5 @@
 make man file
 
 make README.md
+
+make global config file /etc/gtkrun/config and comments in it

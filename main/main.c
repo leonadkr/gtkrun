@@ -190,7 +190,6 @@ main(
 
 	g_application_add_main_option_entries( app, entries );
 	g_application_set_option_context_summary( app, PROGRAM_SUMMARY );
-	g_object_set_data_full( G_OBJECT( app ), "shared", shared, (GDestroyNotify)gr_shared_free );
 
 	g_signal_connect( G_OBJECT( app ), "startup", G_CALLBACK( on_app_startup ), NULL );
 	g_signal_connect( G_OBJECT( app ), "activate", G_CALLBACK( on_app_activate ), shared );
@@ -198,6 +197,7 @@ main(
 
 	ret = g_application_run( app, argc, argv );
 
+	gr_shared_free( shared );
 	g_object_unref( G_OBJECT( app ) );
 
 	return ret;
