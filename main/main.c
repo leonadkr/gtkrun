@@ -51,7 +51,10 @@ parse_config(
 	if( error != NULL )
 		g_clear_error( &error );
 	else
+	{
 		shared->height = height;
+		shared->max_height_set = FALSE;
+	}
 
 	max_height = g_key_file_get_integer( key_file, "Main", "max-height", &error );
 	if( error != NULL )
@@ -137,7 +140,9 @@ on_app_handle_local_options(
 
 	g_variant_dict_lookup( options, "silent", "b", &( shared->silent ) );
 	g_variant_dict_lookup( options, "width", "i", &( shared->width ) );
-	g_variant_dict_lookup( options, "height", "i", &( shared->height ) );
+
+	if( g_variant_dict_lookup( options, "height", "i", &( shared->height ) ) )
+		shared->max_height_set = FALSE;
 
 	if( g_variant_dict_lookup( options, "max-height", "i", &( shared->max_height ) ) )
 		shared->max_height_set = TRUE;
