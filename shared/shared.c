@@ -197,8 +197,6 @@ gr_shared_set_filenames_from_env(
 		}
 	}
 	g_strfreev( patharr );
-
-	g_ptr_array_sort( self->env_filenames, (GCompareFunc)g_strcmp0 );
 }
 
 void
