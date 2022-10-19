@@ -63,26 +63,22 @@ gr_editable_set_compared_text(
 	gint position )
 {
 	GrEditablePrivate *priv;
-	GPtrArray *arr;
-	gchar *text;
+	gchar *text, *s;
 
 	g_return_if_fail( GTK_IS_EDITABLE( self ) );
 
 	priv = gr_editable_get_private( self );
 
 	text = gtk_editable_get_chars( self, 0, position );
-	arr = gr_shared_get_compared_array( priv->shared, text );
+	s = gr_shared_get_compared_string( priv->shared, text );
 	g_free( text );
 
-	/* nothing to insert */
-	if( arr->len == 0 )
-		goto out;
-
-	gtk_editable_set_text( self, (gchar*)arr->pdata[0] );
-	gtk_editable_set_position( self, position );
-
-out:
-	g_ptr_array_unref( arr );
+	if( s != NULL )
+	{
+		gtk_editable_set_text( self, s );
+		gtk_editable_set_position( self, position );
+		g_free( s );
+	}
 }
 
 static void

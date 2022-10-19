@@ -6,13 +6,17 @@
 #define DEFAULT_ARRAY_SIZE 4096
 
 
+/* add strings equal to text from filenames to arr */
+/* but not more than count */
+/* if count < 0, add all equals */
 static void
 set_compared_array(
 	GPtrArray *arr,
 	GPtrArray *filenames,
-	const gchar *text )
+	const gchar *text,
+	gint count )
 {
-	guint i;
+	guint i, n;
 	gchar *s;
 	gssize text_len;
 
@@ -25,11 +29,17 @@ set_compared_array(
 	if( text_len == 0 )
 		return;
 
-	for( i = 0; i < filenames->len; ++i )
+	for( i = 0, n = 0; i < filenames->len; ++i )
 	{
 		s = (gchar*)filenames->pdata[i];
 		if( g_strstr_len( s, text_len, text ) != NULL )
+		{
 			g_ptr_array_add( arr, g_strdup( s ) );
+			n++;
+		}
+
+		if( count > 0 && n >= count )
+			break;
 	}
 }
 
@@ -247,6 +257,30 @@ out1:
 	g_object_unref( G_OBJECT( file ) );
 }
 
+gchar*
+gr_shared_get_compared_string(
+	GrShared *self,
+	const gchar *text )
+{
+	gchar *s;
+	GPtrArray *arr = g_ptr_array_new_full( 1, (GDestroyNotify)g_free );
+
+	if( !self->no_cache )
+		set_compared_array( arr, self->cache_filenames, text, 1 );
+
+	if( arr->len < 1 )
+		set_compared_array( arr, self->env_filenames, text, 1 );
+
+	if( arr->len < 1 )
+		s = NULL;
+	else
+		s = g_strdup( (gchar*)arr->pdata[0] );
+
+	g_ptr_array_unref( arr );
+
+	return s;
+}
+
 GPtrArray*
 gr_shared_get_compared_array(
 	GrShared *self,
@@ -257,8 +291,8 @@ gr_shared_get_compared_array(
 	GPtrArray *arr = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
 
 	if( !self->no_cache )
-		set_compared_array( arr, self->cache_filenames, text );
-	set_compared_array( arr, self->env_filenames, text );
+		set_compared_array( arr, self->cache_filenames, text, -1 );
+	set_compared_array( arr, self->env_filenames, text, -1 );
 
 	/* replace dublicates with NULL */
 	for( i = 0; i < arr->len; ++i )
