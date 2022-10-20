@@ -195,6 +195,7 @@ main(
 
 	g_application_add_main_option_entries( app, entries );
 	g_application_set_option_context_summary( app, PROGRAM_SUMMARY );
+	g_application_set_option_context_description( app, PROGRAM_NAME" version "PROGRAM_VERSION );
 
 	g_signal_connect( G_OBJECT( app ), "startup", G_CALLBACK( on_app_startup ), NULL );
 	g_signal_connect( G_OBJECT( app ), "activate", G_CALLBACK( on_app_activate ), shared );
