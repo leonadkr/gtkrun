@@ -333,7 +333,7 @@ gr_shared_store_command_to_cache(
 	GrShared *self,
 	const gchar *command )
 {
-	const gchar lineend[] = "\r\n";
+	const gchar eol[] = "\n";
 
 	GFile *file, *dir;
 	GFileOutputStream *file_stream;
@@ -377,7 +377,7 @@ gr_shared_store_command_to_cache(
 	}
 	data_stream = g_data_output_stream_new( G_OUTPUT_STREAM( file_stream ) );
 
-	line = g_strconcat( command, lineend, NULL );
+	line = g_strconcat( command, eol, NULL );
 	g_data_output_stream_put_string( data_stream, line, NULL, &error );
 	g_free( line );
 	if( error != NULL )
