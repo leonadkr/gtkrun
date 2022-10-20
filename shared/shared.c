@@ -9,6 +9,7 @@
 /* add strings equal to text from filenames to arr */
 /* but not more than count */
 /* if count < 0, add all equals */
+/* filenames should be sorted */
 static void
 set_compared_array(
 	GPtrArray *arr,
@@ -16,6 +17,7 @@ set_compared_array(
 	const gchar *text,
 	gint count )
 {
+	gboolean domain_found;
 	guint i, n;
 	gchar *s;
 	gssize text_len;
@@ -29,6 +31,7 @@ set_compared_array(
 	if( text_len == 0 )
 		return;
 
+	domain_found = FALSE;
 	for( i = 0, n = 0; i < filenames->len; ++i )
 	{
 		s = (gchar*)filenames->pdata[i];
@@ -36,7 +39,10 @@ set_compared_array(
 		{
 			g_ptr_array_add( arr, g_strdup( s ) );
 			n++;
+			domain_found = TRUE;
 		}
+		else if( domain_found )
+			break;
 
 		if( count > 0 && n >= count )
 			break;
@@ -51,6 +57,14 @@ duplicate_string(
 	g_return_val_if_fail( str != NULL, NULL );
 
 	return g_strdup( str );
+}
+
+static gint
+compare_strings_by_points(
+	gchar **s1,
+	gchar **s2 )
+{
+	return g_strcmp0( *s1, *s2 );
 }
 
 static void
@@ -196,6 +210,7 @@ gr_shared_set_filenames_from_env(
 			g_clear_error( &error );
 		}
 	}
+	g_ptr_array_sort( self->env_filenames, (GCompareFunc)compare_strings_by_points );
 	g_strfreev( patharr );
 }
 
@@ -246,6 +261,7 @@ gr_shared_set_filenames_from_cache(
 
 		g_ptr_array_add( self->cache_filenames, line );
 	}
+	g_ptr_array_sort( self->cache_filenames, (GCompareFunc)compare_strings_by_points );
 
 out2:
 	g_object_unref( G_OBJECT( data_stream ) );
