@@ -71,7 +71,6 @@ gr_editable_set_compared_text(
 
 	text = gtk_editable_get_chars( self, 0, position );
 	s = gr_shared_get_compared_string( priv->shared, text );
-	g_free( text );
 
 	if( s != NULL )
 	{
@@ -79,6 +78,10 @@ gr_editable_set_compared_text(
 		gtk_editable_set_position( self, position );
 		g_free( s );
 	}
+	else
+		gtk_editable_set_text( self, text );
+
+	g_free( text );
 }
 
 static void
