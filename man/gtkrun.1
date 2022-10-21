@@ -1,0 +1,75 @@
+.TH GTKRUN 1 "2022-10-21" "gtkrun version 1.0.0"
+.SH NAME
+gtkrun \- an application launcher.
+.SH SYNOPSIS
+.BI "gtkrun [" "OPTIONS" "]"
+.SH DESCRIPTION
+.B gtkrun
+launches applications in a graphical environment supported by GTK4. Just run
+.B gtkrun
+when you are in X or Wayland (not tested). At start the program scans the cache file (if
+.I no-cache
+is not set) and the environment variable 
+.I PATH
+for binary directories. The cache file contains the list of recently executed commands, it is a simple text file, you can modify it freely.
+.PP
+Start typing and the program will complete your command. Press
+.I [Tab]
+button to see the list of all completions. Just press
+.I [Enter]
+to execute command: either from the entry or from the list. Press
+.I [Esc]
+or
+.I [Ctrl-q]
+to terminate the program.
+.SH OPTIONS
+.TP
+.I silent
+Do not show output of the executed command.
+.TP
+.I width
+Set width of the window.
+.TP
+.I height
+Set height of the window.
+.TP
+.I max-height
+Set maximum height of the window. If this option is set, option
+.I height
+is ignored. The window will adjust height, but not bigger than
+.IR max-height .
+.TP
+.I cache
+Set path to the cache file. If not set, the program uses default:
+.IR "$XDG_CACHE_HOME/gtkrun/cache" " or " "$HOME/.cache/gtkrun/cache" .
+.TP
+.I no-cache
+Do not use any cache file.
+.TP
+.I config
+Set path to the configure file. If not set, the program uses default:
+.IR "$XDG_CONFIG_HOME/gtkrun/config" " or " "$HOME/.config/gtkrun/config" .
+.TP
+.I no-config
+Do not use any configure file.
+.SH CUSTOM CONFIG
+You may create the textual config file \fI$XDG_CONFIG_HOME/gtkrun/config\fP (or \fI$HOME/.config/gtkrun/config\fP), that will be scanned at the program start, or set \fIno-config\fP argument to ignore the config file. Arguments added to the program will overwrite appropriate config lines.
+.PP
+Custom config example:
+.PP
+.in +4n
+.EX
+[Main]
+silent = false
+width = 400
+height = 400
+max_height = 400
+cache = /path/to/cache/file
+no_cache = false
+config = /path/to/config/file
+no_config = false
+.EE
+.in
+.PP
+.SH AUTHOR
+leonadkr@gmail.com
