@@ -1,4 +1,4 @@
-.TH GTKRUN 1 "2022-10-21" "gtkrun version 1.0.0"
+.TH GTKRUN 1 "2022-10-21" "gtkrun version @PROGRAM_VERSION@"
 .SH NAME
 gtkrun \- an application launcher.
 .SH SYNOPSIS
@@ -10,7 +10,7 @@ launches applications in a graphical environment supported by GTK4. Just run
 when you are in X or Wayland (not tested). At start the program scans the cache file (if
 .I no-cache
 is not set) and the environment variable 
-.I PATH
+.I $PATH
 for binary directories. The cache file contains the list of recently executed commands, it is a simple text file, you can modify it freely.
 .PP
 Start typing and the program will complete your command. Press
