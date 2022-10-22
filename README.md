@@ -37,7 +37,7 @@ Custom config example:
 
 Build-time dependencies:
 
-1. gcc or clang( not tested )
+1. gcc or clang
 2. [cmake](https://gitlab.kitware.com/cmake/cmake)
 
 Run-time dependencies:
