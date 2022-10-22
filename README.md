@@ -31,8 +31,6 @@ Custom config example:
 	max_height = 400
 	cache = /path/to/cache/file
 	no_cache = false
-	config = /path/to/config/file
-	no_config = false
 
 
 ## Build and install
