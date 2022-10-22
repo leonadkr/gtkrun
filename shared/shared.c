@@ -277,7 +277,7 @@ gr_shared_get_compared_string(
 	const gchar *text )
 {
 	gchar *s;
-	GPtrArray *arr = g_ptr_array_new_full( 1, (GDestroyNotify)g_free );
+	GPtrArray *arr = g_ptr_array_new_full( 1, NULL );
 
 	if( !self->no_cache )
 		set_compared_array( arr, self->cache_filenames, text, 1 );
@@ -288,7 +288,7 @@ gr_shared_get_compared_string(
 	if( arr->len < 1 )
 		s = NULL;
 	else
-		s = g_strdup( (gchar*)arr->pdata[0] );
+		s = (gchar*)arr->pdata[0];
 
 	g_ptr_array_unref( arr );
 
