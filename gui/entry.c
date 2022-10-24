@@ -76,7 +76,6 @@ gr_editable_set_compared_text(
 	{
 		gtk_editable_set_text( self, s );
 		gtk_editable_set_position( self, position );
-		g_free( s );
 	}
 	else
 		gtk_editable_set_text( self, text );

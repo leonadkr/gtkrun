@@ -142,9 +142,12 @@ gr_tree_view_set_model_by_text(
 	priv = gr_tree_view_get_private( self );
 	arr = gr_shared_get_compared_array( priv->shared, text );
 
-	/* nothing to insert */
+	/* if nothing to insert -- reset the list store */
 	if( arr->len == 0 )
-		goto out;
+	{
+		gtk_tree_view_set_model( self, NULL );
+		return;
+	}
 
 	list_store = gtk_list_store_new( 1, G_TYPE_STRING );
 	for( i = 0; i < arr->len; ++i )
@@ -158,9 +161,6 @@ gr_tree_view_set_model_by_text(
 		}
 	}
 	gtk_tree_view_set_model( self, GTK_TREE_MODEL( list_store ) );
-
-out:
-	g_ptr_array_unref( arr );
 }
 
 gchar*

@@ -37,7 +37,7 @@ set_compared_array(
 		s = (gchar*)filenames->pdata[i];
 		if( g_strstr_len( s, text_len, text ) != NULL )
 		{
-			g_ptr_array_add( arr, g_strdup( s ) );
+			g_ptr_array_add( arr, s );
 			n++;
 			domain_found = TRUE;
 		}
@@ -60,7 +60,7 @@ duplicate_string(
 }
 
 static gint
-compare_strings_by_points(
+compare_strings_by_pointers(
 	gchar **s1,
 	gchar **s2 )
 {
@@ -137,6 +137,7 @@ gr_shared_new(
 
 	self->env_filenames = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
 	self->cache_filenames = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
+	self->compared_array = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, NULL );
 
 	return self;
 }
@@ -151,6 +152,7 @@ gr_shared_free(
 	g_free( self->config_filepath );
 	g_ptr_array_unref( self->env_filenames );
 	g_ptr_array_unref( self->cache_filenames );
+	g_ptr_array_unref( self->compared_array );
 	g_free( self );
 }
 
@@ -175,6 +177,7 @@ gr_shared_dup(
 
 	shared->env_filenames = g_ptr_array_copy( self->env_filenames, (GCopyFunc)duplicate_string, NULL );
 	shared->cache_filenames = g_ptr_array_copy( self->cache_filenames, (GCopyFunc)duplicate_string, NULL );
+	shared->compared_array = g_ptr_array_copy( self->cache_filenames, NULL, NULL );
 
 	return shared;
 }
@@ -210,7 +213,7 @@ gr_shared_set_filenames_from_env(
 			g_clear_error( &error );
 		}
 	}
-	g_ptr_array_sort( self->env_filenames, (GCompareFunc)compare_strings_by_points );
+	g_ptr_array_sort( self->env_filenames, (GCompareFunc)compare_strings_by_pointers );
 	g_strfreev( patharr );
 }
 
@@ -261,7 +264,7 @@ gr_shared_set_filenames_from_cache(
 
 		g_ptr_array_add( self->cache_filenames, line );
 	}
-	g_ptr_array_sort( self->cache_filenames, (GCompareFunc)compare_strings_by_points );
+	g_ptr_array_sort( self->cache_filenames, (GCompareFunc)compare_strings_by_pointers );
 
 out2:
 	g_object_unref( G_OBJECT( data_stream ) );
@@ -271,13 +274,17 @@ out1:
 	g_object_unref( G_OBJECT( file ) );
 }
 
+/* don't g_free() result */
 gchar*
 gr_shared_get_compared_string(
 	GrShared *self,
 	const gchar *text )
 {
 	gchar *s;
-	GPtrArray *arr = g_ptr_array_new_full( 1, NULL );
+	GPtrArray *arr;
+
+	arr = self->compared_array;
+	arr->len = 0;
 
 	if( !self->no_cache )
 		set_compared_array( arr, self->cache_filenames, text, 1 );
@@ -290,11 +297,10 @@ gr_shared_get_compared_string(
 	else
 		s = (gchar*)arr->pdata[0];
 
-	g_ptr_array_unref( arr );
-
 	return s;
 }
 
+/* don't unref() resutl */
 GPtrArray*
 gr_shared_get_compared_array(
 	GrShared *self,
@@ -302,7 +308,10 @@ gr_shared_get_compared_array(
 {
 	guint i, j;
 	gchar *si, *sj;
-	GPtrArray *arr = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
+	GPtrArray *arr;
+
+	arr = self->compared_array;
+	arr->len = 0;
 
 	if( !self->no_cache )
 		set_compared_array( arr, self->cache_filenames, text, -1 );
@@ -319,10 +328,7 @@ gr_shared_get_compared_array(
 				continue;
 
 			if( g_strcmp0( si, sj ) == 0 )
-			{
-				g_free( sj );
 				arr->pdata[j] = NULL;
-			}
 		}
 
 	return arr;

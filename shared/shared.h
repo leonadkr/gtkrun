@@ -19,6 +19,7 @@ struct _GrShared
 	/* shared */
 	GPtrArray *env_filenames;
 	GPtrArray *cache_filenames;
+	GPtrArray *compared_array;
 };
 typedef struct _GrShared GrShared;
 
