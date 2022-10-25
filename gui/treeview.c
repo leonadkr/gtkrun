@@ -64,7 +64,7 @@ on_event_key_pressed(
 	GtkTreeIter iter;
 	gchar *command;
 
-	if( keyval == GDK_KEY_Return )
+	if( keyval == GDK_KEY_Return || keyval == GDK_KEY_KP_Enter )
 	{
 		tree_selection = gtk_tree_view_get_selection( tree_view );
 		if( gtk_tree_selection_get_selected( tree_selection, &model, &iter ) )

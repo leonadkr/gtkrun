@@ -145,7 +145,7 @@ on_event_key_pressed(
 	GtkEditable *editable = GTK_EDITABLE( user_data );
 	GrEditablePrivate *priv = gr_editable_get_private( editable );
 
-	if( keyval == GDK_KEY_Return )
+	if( keyval == GDK_KEY_Return || keyval == GDK_KEY_KP_Enter )
 	{
 		command = gtk_editable_get_text( editable );
 		gr_shared_system_call( priv->shared, command );
