@@ -177,7 +177,7 @@ main(
 
 	g_return_val_if_fail( g_application_id_is_valid( APP_ID ), EXIT_FAILURE );
 
-	app = G_APPLICATION( gtk_application_new( APP_ID, G_APPLICATION_FLAGS_NONE ) );
+	app = G_APPLICATION( gtk_application_new( APP_ID, G_APPLICATION_DEFAULT_FLAGS ) );
 	if( app == NULL )
 		return EXIT_FAILURE;
 
