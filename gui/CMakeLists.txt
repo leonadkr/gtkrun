@@ -7,7 +7,7 @@ pkg_check_modules( GTK4 REQUIRED gtk4 )
 add_library( ${PROJECT_NAME}
 	STATIC
 	entry.c
-	treeview.c
+	listview.c
 	window.c )
 
 set_target_properties( ${PROJECT_NAME} PROPERTIES
