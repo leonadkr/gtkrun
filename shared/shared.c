@@ -3,7 +3,9 @@
 #include "shared.h"
 
 
-#define DEFAULT_ARRAY_SIZE 4096
+#define DEFAULT_ENV_ARRAY_SIZE 4096
+#define DEFAULT_CACHE_ARRAY_SIZE 32
+#define DEFAULT_COMPARED_ARRAY_SIZE 1
 
 
 /* add strings equal to text from filenames to arr */
@@ -54,8 +56,6 @@ duplicate_string(
 	gchar *str,
 	gpointer user_data )
 {
-	g_return_val_if_fail( str != NULL, NULL );
-
 	return g_strdup( str );
 }
 
@@ -79,6 +79,7 @@ filename_array_add_from_path(
 	GError *error_loc = NULL;
 
 	g_return_if_fail( filenames != NULL );
+	g_return_if_fail( dirname != NULL );
 
 	/* nothing to do */
 	if( dirname == NULL )
@@ -113,79 +114,18 @@ filename_array_add_from_path(
 	}
 
 out2:
+	g_file_enumerator_close( direnum, NULL, &error_loc );
+	if( error_loc != NULL )
+		g_propagate_error( error, error_loc );
 	g_object_unref( G_OBJECT( direnum ) );
 
 out1:
 	g_object_unref( G_OBJECT( dir ) );
 }
 
-GrShared*
-gr_shared_new(
-	void )
-{
-	GrShared *self = g_new0( GrShared, 1 );
-
-	self->silent = FALSE;
-	self->width = 0;
-	self->height = 0;
-	self->max_height = 0;
-	self->max_height_set = FALSE;
-	self->cache_filepath = NULL;
-	self->no_cache = FALSE;
-	self->config_filepath = NULL;
-	self->no_config = FALSE;
-
-	self->env_filenames = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
-	self->cache_filenames = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, (GDestroyNotify)g_free );
-	self->compared_array = g_ptr_array_new_full( DEFAULT_ARRAY_SIZE, NULL );
-
-	return self;
-}
-
-void
-gr_shared_free(
+static void
+gr_shared_set_env_filenames(
 	GrShared *self )
-{
-	g_return_if_fail( self != NULL );
-
-	g_free( self->cache_filepath );
-	g_free( self->config_filepath );
-	g_ptr_array_unref( self->env_filenames );
-	g_ptr_array_unref( self->cache_filenames );
-	g_ptr_array_unref( self->compared_array );
-	g_free( self );
-}
-
-GrShared*
-gr_shared_dup(
-	GrShared *self )
-{
-	GrShared *shared;
-
-	g_return_val_if_fail( self != NULL, NULL );
-
-	shared = gr_shared_new();
-	shared->silent = self->silent;
-	shared->width = self->width;
-	shared->height = self->height;
-	shared->max_height = self->max_height;
-	shared->max_height_set = self->max_height_set;
-	shared->cache_filepath = g_strdup( self->cache_filepath );
-	shared->no_cache = self->no_cache;
-	shared->config_filepath = g_strdup( self->config_filepath );
-	shared->no_config = self->no_config;
-
-	shared->env_filenames = g_ptr_array_copy( self->env_filenames, (GCopyFunc)duplicate_string, NULL );
-	shared->cache_filenames = g_ptr_array_copy( self->cache_filenames, (GCopyFunc)duplicate_string, NULL );
-	shared->compared_array = g_ptr_array_copy( self->cache_filenames, NULL, NULL );
-
-	return shared;
-}
-
-void
-gr_shared_set_filenames_from_env(
-	GrShared *self,
-	const gchar *pathenv )
 {
 	const gchar delim[] = ":";
 
@@ -196,10 +136,10 @@ gr_shared_set_filenames_from_env(
 	g_return_if_fail( self != NULL );
 
 	/* nothing to do */
-	if( pathenv == NULL )
+	if( self->path_env == NULL )
 		return;
 
-	pathstr = g_getenv( pathenv );
+	pathstr = g_getenv( self->path_env );
 	patharr = g_strsplit( pathstr, delim, -1 );
 
 	for( arr = patharr; arr[0] != NULL; arr++ )
@@ -217,10 +157,9 @@ gr_shared_set_filenames_from_env(
 	g_strfreev( patharr );
 }
 
-void
-gr_shared_set_filenames_from_cache(
-	GrShared *self,
-	gchar *cache_filepath )
+static void
+gr_shared_set_cache_filenames(
+	GrShared *self )
 {
 	GFile *file;
 	GFileInputStream *file_stream;
@@ -232,10 +171,10 @@ gr_shared_set_filenames_from_cache(
 	g_return_if_fail( self != NULL );
 
 	/* nothing to do */
-	if( cache_filepath == NULL )
+	if( self->cache_filepath == NULL )
 		return;
 
-	file = g_file_new_for_path( cache_filepath );
+	file = g_file_new_for_path( self->cache_filepath );
 	file_stream = g_file_read( file, NULL, &error );
 	if( error != NULL )
 	{
@@ -274,6 +213,83 @@ out1:
 	g_object_unref( G_OBJECT( file ) );
 }
 
+GrShared*
+gr_shared_new(
+	void )
+{
+	GrShared *self = g_new0( GrShared, 1 );
+
+	self->silent = FALSE;
+	self->width = 0;
+	self->height = 0;
+	self->max_height = 0;
+	self->max_height_set = FALSE;
+	self->cache_filepath = NULL;
+	self->no_cache = FALSE;
+	self->config_filepath = NULL;
+	self->no_config = FALSE;
+	self->path_env = NULL;
+
+	self->env_filenames = g_ptr_array_new_full( DEFAULT_ENV_ARRAY_SIZE, (GDestroyNotify)g_free );
+	self->cache_filenames = g_ptr_array_new_full( DEFAULT_CACHE_ARRAY_SIZE, (GDestroyNotify)g_free );
+	self->compared_array = g_ptr_array_new_full( DEFAULT_COMPARED_ARRAY_SIZE, NULL );
+
+	return self;
+}
+
+void
+gr_shared_free(
+	GrShared *self )
+{
+	g_return_if_fail( self != NULL );
+
+	g_free( self->cache_filepath );
+	g_free( self->config_filepath );
+	g_free( self->path_env );
+	g_ptr_array_unref( self->env_filenames );
+	g_ptr_array_unref( self->cache_filenames );
+	g_ptr_array_unref( self->compared_array );
+	g_free( self );
+}
+
+GrShared*
+gr_shared_dup(
+	GrShared *self )
+{
+	GrShared *shared;
+
+	g_return_val_if_fail( self != NULL, NULL );
+
+	shared = gr_shared_new();
+	shared->silent = self->silent;
+	shared->width = self->width;
+	shared->height = self->height;
+	shared->max_height = self->max_height;
+	shared->max_height_set = self->max_height_set;
+	shared->cache_filepath = g_strdup( self->cache_filepath );
+	shared->no_cache = self->no_cache;
+	shared->config_filepath = g_strdup( self->config_filepath );
+	shared->no_config = self->no_config;
+	shared->path_env = g_strdup( self->path_env );
+
+	shared->env_filenames = g_ptr_array_copy( self->env_filenames, (GCopyFunc)duplicate_string, NULL );
+	shared->cache_filenames = g_ptr_array_copy( self->cache_filenames, (GCopyFunc)duplicate_string, NULL );
+	shared->compared_array = g_ptr_array_copy( self->cache_filenames, NULL, NULL );
+
+	return shared;
+}
+
+void
+gr_shared_setup(
+	GrShared *self )
+{
+	g_return_if_fail( self != NULL );
+
+	gr_shared_set_env_filenames( self );
+	gr_shared_set_cache_filenames( self );
+	g_ptr_array_set_size( self->compared_array, self->env_filenames->len + self->cache_filenames->len + 1 );
+}
+
 /* don't g_free() result */
 gchar*
 gr_shared_get_compared_string(
@@ -300,7 +316,7 @@ gr_shared_get_compared_string(
 	return s;
 }
 
-/* don't unref() resutl */
+/* don't unref() result */
 GPtrArray*
 gr_shared_get_compared_array(
 	GrShared *self,
@@ -353,13 +369,14 @@ gr_shared_store_command_to_cache(
 	if( command == NULL || self->no_cache )
 		return;
 
-	/* if command is in cache -- nothing to do */
+	/* if command is in cache, do nothing */
 	if( g_ptr_array_find_with_equal_func( self->cache_filenames, command, (GEqualFunc)g_str_equal, NULL ) )
 		return;
 
 	file = g_file_new_for_path( self->cache_filepath );
 	dir = g_file_get_parent( file );
 
+	/* create cache dir, if it does not exist */
 	g_file_make_directory_with_parents( dir, NULL, &error );
 	if( error != NULL && error->code != G_IO_ERROR_EXISTS )
 	{
@@ -372,6 +389,7 @@ gr_shared_store_command_to_cache(
 	else
 		g_clear_error( &error );
 
+	/* open or create cache file with append mode */
 	file_stream = g_file_append_to( file, G_FILE_CREATE_PRIVATE, NULL, &error );
 	if( error != NULL )
 	{
@@ -383,6 +401,7 @@ gr_shared_store_command_to_cache(
 	}
 	data_stream = g_data_output_stream_new( G_OUTPUT_STREAM( file_stream ) );
 
+	/* store command to cache file */
 	line = g_strconcat( command, eol, NULL );
 	g_data_output_stream_put_string( data_stream, line, NULL, &error );
 	g_free( line );

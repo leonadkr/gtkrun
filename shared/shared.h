@@ -15,6 +15,7 @@ struct _GrShared
 	gboolean no_cache;
 	gchar *config_filepath;
 	gboolean no_config;
+	gchar *path_env;
 
 	/* shared */
 	GPtrArray *env_filenames;
@@ -26,8 +27,7 @@ typedef struct _GrShared GrShared;
 GrShared* gr_shared_new( void );
 void gr_shared_free( GrShared *self );
 GrShared* gr_shared_dup( GrShared *self );
-void gr_shared_set_filenames_from_env( GrShared *self, const gchar *pathenv );
-void gr_shared_set_filenames_from_cache( GrShared *self, gchar *cache_filepath );
+void gr_shared_setup( GrShared *self );
 gchar* gr_shared_get_compared_string( GrShared *self, const gchar *text );
 GPtrArray* gr_shared_get_compared_array( GrShared *self, const gchar *text );
 void gr_shared_store_command_to_cache( GrShared *self, const gchar *command );
