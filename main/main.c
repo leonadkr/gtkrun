@@ -147,7 +147,7 @@ on_app_handle_local_options(
 	if( g_variant_dict_lookup( options, "max-height", "i", &( shared->max_height ) ) )
 		shared->max_height_set = TRUE;
 
-	gr_shared_setup( shared );
+	gr_shared_setup_private( shared );
 
 	return -1;
 }

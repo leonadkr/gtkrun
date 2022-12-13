@@ -280,7 +280,7 @@ gr_shared_dup(
 }
 
 void
-gr_shared_setup(
+gr_shared_setup_private(
 	GrShared *self )
 {
 	g_return_if_fail( self != NULL );
