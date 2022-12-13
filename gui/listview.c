@@ -110,6 +110,8 @@ gr_list_view_new(
 	item_factory = GTK_LIST_ITEM_FACTORY( gtk_signal_list_item_factory_new() );
 	list_view = GTK_LIST_VIEW( gtk_list_view_new( NULL, item_factory ) );
 	gtk_list_view_set_show_separators( list_view, FALSE );
+	gtk_list_view_set_single_click_activate( list_view, FALSE );
+	gtk_list_view_set_enable_rubberband( list_view, FALSE );
 
 	/* connect factory's signals */
 	g_signal_connect( G_OBJECT( item_factory ), "setup", G_CALLBACK( on_item_factory_setup ), NULL );

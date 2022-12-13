@@ -66,7 +66,6 @@ on_event_key_pressed(
 {
 	GtkWindow *window = GTK_WINDOW( user_data );
 	GrWindowPrivate *priv = gr_window_get_private( window );
-	GtkAdjustment *adj;
 	gchar *text;
 
 	if( ( keyval == GDK_KEY_q && ( state & GDK_CONTROL_MASK ) ) ||
@@ -83,9 +82,6 @@ on_event_key_pressed(
 			text = gr_entry_get_text_before_cursor( priv->entry );
 			gr_list_view_set_model_by_text( priv->list_view, text );
 			g_free( text );
-
-			adj = gtk_scrolled_window_get_hadjustment( priv->scrolled_window );
-			gtk_adjustment_set_value( adj, gtk_adjustment_get_lower( adj ) );
 
 			gtk_widget_hide( GTK_WIDGET( priv->entry ) );
 			gtk_widget_show( GTK_WIDGET( priv->scrolled_window ) );
@@ -170,13 +166,13 @@ gr_window_new(
 	entry = gr_entry_new( window, shared );
 	scrolled_window = gr_scrolled_window_new( window, shared );
 	list_view = gr_list_view_new( window, shared );
-	gtk_widget_hide( GTK_WIDGET( scrolled_window ) );
 
 	/* layout widgets */
 	gtk_scrolled_window_set_child( scrolled_window, GTK_WIDGET( list_view ) );
 	gtk_window_set_child( window, GTK_WIDGET( box ) );
 	gtk_box_append( box, GTK_WIDGET( entry ) );
 	gtk_box_append( box, GTK_WIDGET( scrolled_window ) );
+	gtk_widget_hide( GTK_WIDGET( scrolled_window ) );
 
 	/* collect private */
 	priv = gr_window_private_new( window );
