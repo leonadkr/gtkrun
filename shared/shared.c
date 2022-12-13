@@ -129,7 +129,6 @@ gr_shared_set_env_filenames(
 {
 	const gchar delim[] = ":";
 
-	const gchar *pathstr;
 	gchar **patharr, **arr;
 	GError *error = NULL;
 
@@ -139,9 +138,7 @@ gr_shared_set_env_filenames(
 	if( self->path_env == NULL )
 		return;
 
-	pathstr = g_getenv( self->path_env );
-	patharr = g_strsplit( pathstr, delim, -1 );
-
+	patharr = g_strsplit( g_getenv( self->path_env ), delim, -1 );
 	for( arr = patharr; arr[0] != NULL; arr++ )
 	{
 		filename_array_add_from_path( self->env_filenames, arr[0], &error );
