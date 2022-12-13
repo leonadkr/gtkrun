@@ -18,8 +18,8 @@ struct _GrShared
 	gchar *path_env;
 
 	/* private */
-	GPtrArray *env_filenames;
 	GPtrArray *cache_filenames;
+	GPtrArray *env_filenames;
 	GPtrArray *compared_array;
 };
 typedef struct _GrShared GrShared;

@@ -133,8 +133,6 @@ gr_list_view_set_model_by_text(
 {
 	GrListViewPrivate *priv;
 	GPtrArray *arr;
-	guint i;
-	gchar *s;
 	GtkStringList *string_list;
 
 	g_return_if_fail( GTK_IS_LIST_VIEW( self ) );
@@ -153,14 +151,7 @@ gr_list_view_set_model_by_text(
 		return;
 	}
 
-	string_list = gtk_string_list_new( NULL );
-	for( i = 0; i < arr->len; ++i )
-	{
-		s = (gchar*)arr->pdata[i];
-		/* ignore NULL in sparse arr */
-		if( s != NULL )
-			gtk_string_list_append( string_list, s );
-	}
+	string_list = gtk_string_list_new( (const gchar* const*)arr->pdata );
 	gtk_list_view_set_model( self, GTK_SELECTION_MODEL( gtk_single_selection_new( G_LIST_MODEL( string_list ) ) ) );
 }
 

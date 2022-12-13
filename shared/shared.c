@@ -2,54 +2,9 @@
 #include <gio/gio.h>
 #include "shared.h"
 
-
-#define DEFAULT_ENV_ARRAY_SIZE 4096
 #define DEFAULT_CACHE_ARRAY_SIZE 32
+#define DEFAULT_ENV_ARRAY_SIZE 4096
 #define DEFAULT_COMPARED_ARRAY_SIZE 1
-
-
-/* add strings equal to text from filenames to arr */
-/* but not more than count */
-/* if count < 0, add all equals */
-/* filenames should be sorted */
-static void
-set_compared_array(
-	GPtrArray *arr,
-	GPtrArray *filenames,
-	const gchar *text,
-	gint count )
-{
-	gboolean domain_found;
-	guint i, n;
-	gchar *s;
-	gssize text_len;
-
-	/* nothing to do */
-	if( filenames == NULL || text == NULL )
-		return;
-
-	/* nothing to do */
-	text_len = (gssize)strlen( text );
-	if( text_len == 0 )
-		return;
-
-	domain_found = FALSE;
-	for( i = 0, n = 0; i < filenames->len; ++i )
-	{
-		s = (gchar*)filenames->pdata[i];
-		if( g_strstr_len( s, text_len, text ) != NULL )
-		{
-			g_ptr_array_add( arr, s );
-			n++;
-			domain_found = TRUE;
-		}
-		else if( domain_found )
-			break;
-
-		if( count > 0 && n >= count )
-			break;
-	}
-}
 
 static gchar*
 duplicate_string(
@@ -67,12 +22,72 @@ compare_strings_by_pointers(
 	return g_strcmp0( *s1, *s2 );
 }
 
+static gboolean
+equal_strings(
+	gchar *s1,
+	gchar *s2 )
+{
+	return g_strcmp0( s1, s2 ) == 0 ? TRUE : FALSE;
+}
+
+/* add strings equal to text from filenames to arr */
+/* but not more than count */
+/* if count < 0, add all equals */
+/* filenames should be sorted */
+static void
+set_compared_array(
+	GPtrArray *arr,
+	GPtrArray *filenames,
+	const gchar *text,
+	gint count )
+{
+	gboolean domain_found;
+	guint i, add_num;
+	gchar *filename;
+	gssize text_len;
+
+	/* nothing to do */
+	if( filenames == NULL || text == NULL )
+		return;
+
+	/* nothing to do */
+	text_len = (gssize)strlen( text );
+	if( text_len == 0 )
+		return;
+
+	domain_found = FALSE;
+	add_num = 0;
+	for( i = 0; i < filenames->len; ++i )
+	{
+		filename = (gchar*)filenames->pdata[i];
+
+		/* for the filenames is sorted,*/
+		/* comparable items will be placed in the certain domain */
+		if( g_strstr_len( filename, text_len, text ) != NULL )
+		{
+			g_ptr_array_add( arr, filename );
+			add_num++;
+			domain_found = TRUE;
+		}
+		else if( domain_found )
+			break;
+
+		/* add no more count of items */
+		if( count > 0 && add_num >= count )
+			break;
+	}
+}
+
+/* add file names to filenames from directory dir */
+/* and exclude items in excl_arr */
 static void
 filename_array_add_from_path(
 	GPtrArray *filenames,
 	gchar *dirname,
+	GPtrArray *excl_arr,
 	GError **error )
 {
+	const gchar *filename;
 	GFile *dir;
 	GFileEnumerator *direnum;
 	GFileInfo *fileinfo;
@@ -80,6 +95,7 @@ filename_array_add_from_path(
 
 	g_return_if_fail( filenames != NULL );
 	g_return_if_fail( dirname != NULL );
+	g_return_if_fail( excl_arr != NULL );
 
 	/* nothing to do */
 	if( dirname == NULL )
@@ -110,7 +126,13 @@ filename_array_add_from_path(
 		if( fileinfo == NULL )
 			break;
 
-		g_ptr_array_add( filenames, g_strdup( g_file_info_get_name( fileinfo ) ) );
+		filename = g_file_info_get_name( fileinfo );
+
+		/* ignore items in excl_arr */
+		if( g_ptr_array_find_with_equal_func( excl_arr, filename, (GEqualFunc)equal_strings, NULL ) )
+			continue;
+
+		g_ptr_array_add( filenames, g_strdup( filename ) );
 	}
 
 out2:
@@ -139,9 +161,9 @@ gr_shared_set_env_filenames(
 		return;
 
 	patharr = g_strsplit( g_getenv( self->path_env ), delim, -1 );
-	for( arr = patharr; arr[0] != NULL; arr++ )
+	for( arr = patharr; *arr != NULL; arr++ )
 	{
-		filename_array_add_from_path( self->env_filenames, arr[0], &error );
+		filename_array_add_from_path( self->env_filenames, *arr, self->cache_filenames, &error );
 		if( error != NULL )
 		{
 			g_log_structured( G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
@@ -227,8 +249,8 @@ gr_shared_new(
 	self->no_config = FALSE;
 	self->path_env = NULL;
 
-	self->env_filenames = g_ptr_array_new_full( DEFAULT_ENV_ARRAY_SIZE, (GDestroyNotify)g_free );
 	self->cache_filenames = g_ptr_array_new_full( DEFAULT_CACHE_ARRAY_SIZE, (GDestroyNotify)g_free );
+	self->env_filenames = g_ptr_array_new_full( DEFAULT_ENV_ARRAY_SIZE, (GDestroyNotify)g_free );
 	self->compared_array = g_ptr_array_new_full( DEFAULT_COMPARED_ARRAY_SIZE, NULL );
 
 	return self;
@@ -243,8 +265,8 @@ gr_shared_free(
 	g_free( self->cache_filepath );
 	g_free( self->config_filepath );
 	g_free( self->path_env );
-	g_ptr_array_unref( self->env_filenames );
 	g_ptr_array_unref( self->cache_filenames );
+	g_ptr_array_unref( self->env_filenames );
 	g_ptr_array_unref( self->compared_array );
 	g_free( self );
 }
@@ -269,8 +291,8 @@ gr_shared_dup(
 	shared->no_config = self->no_config;
 	shared->path_env = g_strdup( self->path_env );
 
-	shared->env_filenames = g_ptr_array_copy( self->env_filenames, (GCopyFunc)duplicate_string, NULL );
 	shared->cache_filenames = g_ptr_array_copy( self->cache_filenames, (GCopyFunc)duplicate_string, NULL );
+	shared->env_filenames = g_ptr_array_copy( self->env_filenames, (GCopyFunc)duplicate_string, NULL );
 	shared->compared_array = g_ptr_array_copy( self->cache_filenames, NULL, NULL );
 
 	return shared;
@@ -282,9 +304,9 @@ gr_shared_setup_private(
 {
 	g_return_if_fail( self != NULL );
 
-	gr_shared_set_env_filenames( self );
 	gr_shared_set_cache_filenames( self );
-	g_ptr_array_set_size( self->compared_array, self->env_filenames->len + self->cache_filenames->len + 1 );
+	gr_shared_set_env_filenames( self );
+	g_ptr_array_set_size( self->compared_array, self->cache_filenames->len +self->env_filenames->len + 1 );
 }
 
 /* don't g_free() result */
@@ -319,8 +341,6 @@ gr_shared_get_compared_array(
 	GrShared *self,
 	const gchar *text )
 {
-	guint i, j;
-	gchar *si, *sj;
 	GPtrArray *arr;
 
 	arr = self->compared_array;
@@ -330,19 +350,8 @@ gr_shared_get_compared_array(
 		set_compared_array( arr, self->cache_filenames, text, -1 );
 	set_compared_array( arr, self->env_filenames, text, -1 );
 
-	/* replace dublicates with NULL */
-	for( i = 0; i < arr->len; ++i )
-		for( j = i + 1; j < arr->len; ++j )
-		{
-			si = (gchar*)arr->pdata[i];
-			sj = (gchar*)arr->pdata[j];
-
-			if( si == NULL )
-				continue;
-
-			if( g_strcmp0( si, sj ) == 0 )
-				arr->pdata[j] = NULL;
-		}
+	/* NULL-termination for inner array */
+	g_ptr_array_add( arr, NULL );
 
 	return arr;
 }
@@ -367,7 +376,7 @@ gr_shared_store_command_to_cache(
 		return;
 
 	/* if command is in cache, do nothing */
-	if( g_ptr_array_find_with_equal_func( self->cache_filenames, command, (GEqualFunc)g_str_equal, NULL ) )
+	if( g_ptr_array_find_with_equal_func( self->cache_filenames, command, (GEqualFunc)equal_strings, NULL ) )
 		return;
 
 	file = g_file_new_for_path( self->cache_filepath );
