@@ -30,6 +30,21 @@ equal_strings(
 	return g_strcmp0( s1, s2 ) == 0 ? TRUE : FALSE;
 }
 
+static gint
+strncmp0(
+	const gchar *s1,
+	const gchar *s2,
+	gint n )
+{
+	if( s1 == NULL || s2 == NULL )
+		n = -1;
+	
+	if( n < 0 )
+		return g_strcmp0( s1, s2 );
+
+	return strncmp( s1, s2, n );
+}
+
 /* add strings equal to text from filenames to arr */
 /* but not more than count */
 /* if count < 0, add all equals */
@@ -41,40 +56,67 @@ set_compared_array(
 	const gchar *text,
 	gint count )
 {
-	gboolean domain_found;
-	guint i, add_num;
-	gchar *filename;
-	gssize text_len;
+	guint start, end, med, add_num;
+	gint cmp, text_len;
 
 	/* nothing to do */
 	if( filenames == NULL || text == NULL )
 		return;
 
 	/* nothing to do */
-	text_len = (gssize)strlen( text );
+	text_len = (gint)strlen( text );
 	if( text_len == 0 )
 		return;
 
-	domain_found = FALSE;
-	add_num = 0;
-	for( i = 0; i < filenames->len; ++i )
+	/* in filenames finds domain containing text */
+	start = 0;
+	end = filenames->len - 1;
+	while( start < end )
 	{
-		filename = (gchar*)filenames->pdata[i];
+		/* check the median item of filenames */
+		med = start + ( end - start ) / 2;
+		cmp = strncmp0( (gchar*)filenames->pdata[med], text, text_len );
 
-		/* for the filenames is sorted,*/
-		/* comparable items will be placed in the certain domain */
-		if( g_strstr_len( filename, text_len, text ) != NULL )
+		if( cmp == 0 )
 		{
-			g_ptr_array_add( arr, filename );
-			add_num++;
-			domain_found = TRUE;
-		}
-		else if( domain_found )
-			break;
+			/* find beginning of the domain */
+			if( med == 0 )
+				start = 0;
+			else
+				for( start = med - 1; start >= 0; start-- )
+					if( strncmp0( (gchar*)filenames->pdata[start], text, text_len ) != 0 )
+					{
+						start++;
+						break;
+					}
 
-		/* add no more count of items */
-		if( count > 0 && add_num >= count )
+			/* adds items to arr, but no more than count */
+			for( add_num = 0; start <= med && ( count < 0 || add_num < count ); start++, add_num++ )
+				g_ptr_array_add( arr, filenames->pdata[start] );
+
+			/* check if it has added enough */
+			if( count > 0 && add_num >= count )
+				break;
+
+			/* add remained items, but no more than count - ( med - start ) */
+			if( med < filenames->len - 1 )
+				for( end = med + 1; end <= filenames->len - 1 && ( count < 0 || add_num < count ); end++ )
+				{
+					if( strncmp0( (gchar*)filenames->pdata[end], text, text_len ) != 0 )
+						break;
+					else
+					{
+						g_ptr_array_add( arr, filenames->pdata[end] );
+						add_num++;
+					}
+				}
+
 			break;
+		}
+		else if( cmp < 0 )
+			start = med + 1;
+		else
+			end = med;
 	}
 }
 
@@ -350,7 +392,7 @@ gr_shared_get_compared_array(
 		set_compared_array( arr, self->cache_filenames, text, -1 );
 	set_compared_array( arr, self->env_filenames, text, -1 );
 
-	/* NULL-termination for inner array */
+	/* NULL-termination to use inner array as a strv */
 	g_ptr_array_add( arr, NULL );
 
 	return arr;
