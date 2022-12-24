@@ -5,7 +5,7 @@ This program launches applications in a graphical environment supported by GTK4.
 ### Run
 Just run `gtkrun` when you are in X or Wayland (not tested). You can add some options, `gtkrun --help` will show them.
 
-At start the program scans the cache file (if `no-cache` is not set) and the environment variable `$PATH` for binary directories. The cache file contains the list of recently executed commands, it is a simple text file, you can modify it freely.
+At start the program scans the cache file (if `no-cache` is not set) and the environment variable `$PATH` for binary directories. In cache directory it creates cache files: One of them (`stored`) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (`env.cache`) includes data from `$PATH`, you can not modify it, but freely remove, it will be created at next start.
 
 ### Dialog
 Start typing and the program will complete your command:
@@ -29,9 +29,8 @@ Custom config example:
 	width = 400
 	height = 400
 	max_height = 400
-	cache = /path/to/cache/file
+	cache-dir = /path/to/cache/directory
 	no_cache = false
-
 
 ## Build and install
 

@@ -9,9 +9,15 @@ launches applications in a graphical environment supported by GTK4. Just run
 .B gtkrun
 when you are in X or Wayland (not tested). At start the program scans the cache file (if
 .B --no-cache
-is not set) and the environment variable 
+is not set) and the environment variable
 .I $PATH
-for binary directories. The cache file contains the list of recently executed commands, it is a simple text file, you can modify it freely.
+for binary directories. In cache directory it creates cache files. One of them (
+.B stored
+) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (
+.B env.cache
+) includes data from
+.I $PATH
+, you can not modify it, but freely remove, it will be created at next start.
 .PP
 Start typing and the program will complete your command. Press
 .I [Tab]
@@ -23,12 +29,12 @@ or
 .I [Ctrl-q]
 to terminate the program.
 .SH OPTIONS
-.BR \-s ", " \-\-silent
+.BR \-s , \-\-silent
 .RS 4
 Do not show output of the executed command.
 .RE
 .P
-.B \-w ,
+.BR \-w ,
 .B \-\-width
 .I WIDTH
 .RS 4
@@ -44,23 +50,23 @@ Set height of the window.
 .P
 .BR \-m ,
 .B \-\-max\-height
-.I MAX-HEIGHT
+.I MAX_HEIGHT
 .RS 4
 Set maximum height of the window. If this option is set, option
 .B \-\-height
 is ignored. The window will adjust height, but not bigger than
-.IR MAX-HEIGHT .
+.IR MAX_HEIGHT .
 .RE
 .P
 .BR \-a ,
-.B\-\-cache
-.I CACHE-FILE
+.B\-\-cache-dir
+.I CACHE_DIR
 .RS 4
-Set path to the cache file. If not set, the program uses default:
-.IR "$XDG_CACHE_HOME/gtkrun/cache" " or " "$HOME/.cache/gtkrun/cache" .
+Set path to the cache directory. If not set, the program uses default:
+.IR "$XDG_CACHE_HOME/gtkrun" " or " "$HOME/.cache/gtkrun" .
 .RE
 .P
-.BR \-A,
+.BR \-A ,
 .B\-\-no\-cache
 .RS 4
 Do not use any cache file.
@@ -68,7 +74,7 @@ Do not use any cache file.
 .P
 .BR \-o ,
 .B\-\-config
-.I CONFIG-FILE
+.I CONFIG_FILE
 .RS 4
 Set path to the configure file. If not set, the program uses default:
 .IR "$XDG_CONFIG_HOME/gtkrun/config" " or " "$HOME/.config/gtkrun/config" .
@@ -97,8 +103,27 @@ silent = false
 width = 400
 height = 400
 max_height = 400
-cache = /path/to/cache/file
+cache-dir = /path/to/cache/directory
 no_cache = false
 .EE
+.SH FILES
+.IR $XDG_CONFIG_HOME/gtkrun/config ", " $HOME/.config/gtkrun/config
+.RS 4
+stores configuration of the program, read at start if
+.B \-\-no-config
+is not set; 
+.RE
+.P
+.IR $XDG_CACHE_HOME/gtkrun/stored ", " $HOME/.cache/gtkrun/stored
+.RS 4
+stores recently executed commands, you can freely modify this textual file;
+.RE
+.P
+.IR $XDG_CACHE_HOME/gtkrun/env.cache ", " $HOME/.cache/gtkrun/env.cache
+.RS 4
+stores binary data from
+.IR $PATH ,
+can not be modified, but freely removed, it will be created at start;
+.RE
 .SH AUTHOR
 leonadkr@gmail.com

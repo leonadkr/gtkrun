@@ -5,32 +5,34 @@
 
 struct _GrShared
 {
-	/* options */
+	/* public */
 	gboolean silent;
 	gint width;
 	gint height;
 	gint max_height;
 	gboolean max_height_set;
-	gchar *cache_filepath;
+	gchar *cache_dir;
 	gboolean no_cache;
-	gchar *config_filepath;
+	gchar *config_path;
 	gboolean no_config;
-	gchar *path_env;
+	gchar *env;
 
 	/* private */
-	GPtrArray *cache_filenames;
-	GPtrArray *env_filenames;
+	gchar *envstr;
+	GStrv envarr;
+	GPtrArray *stored_array;
+	GPtrArray *env_array;
 	GPtrArray *compared_array;
+	gchar *stored_path;
+	gchar *env_cache_path;
 };
 typedef struct _GrShared GrShared;
 
 GrShared* gr_shared_new( void );
 void gr_shared_free( GrShared *self );
-GrShared* gr_shared_dup( GrShared *self );
 void gr_shared_setup_private( GrShared *self );
 gchar* gr_shared_get_compared_string( GrShared *self, const gchar *text );
 GPtrArray* gr_shared_get_compared_array( GrShared *self, const gchar *text );
-void gr_shared_store_command_to_cache( GrShared *self, const gchar *command );
-void gr_shared_system_call( GrShared *self, const gchar* command );
+void gr_shared_system_call( GrShared *self, const gchar* str );
 
 #endif

@@ -1,9 +1,10 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define CACHE_FILENAME "cache"
 #define CONFIG_FILENAME "config"
-#define PATHENV "PATH"
+#define STORED_FILENAME "stored"
+#define ENV_CACHE_FILENAME "env.cache"
+#define ENVPATH "PATH"
 #define DEFAULT_WINDOW_WIDTH 400
 #define DEFAULT_WINDOW_HEIGHT 400
 #define DEFAULT_WINDOW_MAX_HEIGHT DEFAULT_WINDOW_HEIGHT

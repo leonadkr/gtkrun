@@ -149,7 +149,6 @@ on_event_key_pressed(
 	{
 		command = gtk_editable_get_text( editable );
 		gr_shared_system_call( priv->shared, command );
-		gr_shared_store_command_to_cache( priv->shared, command );
 		gtk_window_destroy( priv->window );
 		return GDK_EVENT_STOP;
 	}

@@ -18,7 +18,7 @@ parse_config(
 {
 	gboolean silent, no_cache;
 	gint width, height, max_height;
-	gchar *cache_filepath;
+	gchar *cache_dir;
 	GKeyFile *key_file;
 	gboolean ret = TRUE;
 	GError *error = NULL;
@@ -71,13 +71,13 @@ parse_config(
 	else
 		shared->no_cache = no_cache;
 
-	cache_filepath = g_key_file_get_string( key_file, "Main", "cache", &error );
+	cache_dir = g_key_file_get_string( key_file, "Main", "cache-dir", &error );
 	if( error != NULL )
 		g_clear_error( &error );
 	else
 	{
-		g_free( shared->cache_filepath );
-		shared->cache_filepath = cache_filepath;
+		g_free( shared->cache_dir );
+		shared->cache_dir = cache_dir;
 	}
 
 out:
@@ -117,25 +117,25 @@ on_app_handle_local_options(
 	gpointer user_data )
 {
 	GrShared *shared = (GrShared*)user_data;
-	gchar *config_filepath, *cache_filepath;
+	gchar *config_path, *cache_dir;
 
 	/* set up options */
 	g_variant_dict_lookup( options, "no-config", "b", &( shared->no_config ) );
 
-	if( g_variant_dict_lookup( options, "config", "s", &config_filepath ) )
+	if( g_variant_dict_lookup( options, "config", "s", &config_path ) )
 	{
-		g_free( shared->config_filepath );
-		shared->config_filepath = config_filepath;
+		g_free( shared->config_path );
+		shared->config_path = config_path;
 	}
 	if( !shared->no_config )
-		parse_config( shared->config_filepath, shared );
+		parse_config( shared->config_path, shared );
 
 	g_variant_dict_lookup( options, "no-cache", "b", &( shared->no_cache ) );
 
-	if( g_variant_dict_lookup( options, "cache", "s", &cache_filepath ) )
+	if( g_variant_dict_lookup( options, "cache-dir", "s", &cache_dir ) )
 	{
-		g_free( shared->cache_filepath );
-		shared->cache_filepath = cache_filepath;
+		g_free( shared->cache_dir );
+		shared->cache_dir = cache_dir;
 	}
 
 	g_variant_dict_lookup( options, "silent", "b", &( shared->silent ) );
@@ -166,9 +166,9 @@ main(
 		{ "width", 'w', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window width", "WIDTH" },
 		{ "height", 'h', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window height", "HEIGHT" },
 		{ "max-height", 'm', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window maximum height", "MAX_HEIGHT" },
-		{ "cache", 'a', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to cache file", "CACHE_FILEPATH" },
+		{ "cache-dir", 'a', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to cache directory", "CACHE_DIR" },
 		{ "no-cache", 'A', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use cache file", NULL },
-		{ "config", 'o', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to configure file", "CACHE_FILEPATH" },
+		{ "config", 'o', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, NULL, "Path to configure file", "CONFIG_PATH" },
 		{ "no-config", 'O', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use configure file", NULL },
 		{ NULL }
 	};
@@ -186,11 +186,11 @@ main(
 	shared->height = DEFAULT_WINDOW_HEIGHT;
 	shared->max_height = DEFAULT_WINDOW_MAX_HEIGHT;
 	shared->max_height_set = FALSE;
-	shared->cache_filepath = g_build_filename( g_get_user_cache_dir(), PROGRAM_NAME, CACHE_FILENAME, NULL );
+	shared->cache_dir = g_build_filename( g_get_user_cache_dir(), PROGRAM_NAME, NULL );
 	shared->no_cache = FALSE;
-	shared->config_filepath = g_build_filename( g_get_user_config_dir(), PROGRAM_NAME, CONFIG_FILENAME, NULL );
+	shared->config_path = g_build_filename( g_get_user_config_dir(), PROGRAM_NAME, CONFIG_FILENAME, NULL );
 	shared->no_config = FALSE;
-	shared->path_env = g_strdup( PATHENV );
+	shared->env = g_strdup( ENVPATH );
 
 	g_application_add_main_option_entries( app, entries );
 	g_application_set_option_context_summary( app, PROGRAM_SUMMARY );

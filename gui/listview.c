@@ -88,7 +88,6 @@ on_list_view_activate(
 	object = G_OBJECT( g_list_model_get_item( G_LIST_MODEL( gtk_list_view_get_model( self ) ), position ) );
 	g_object_get( object, "string", &command, NULL );
 	gr_shared_system_call( priv->shared, command );
-	gr_shared_store_command_to_cache( priv->shared, command );
 	g_free( command );
 
 	gtk_window_destroy( priv->window );
