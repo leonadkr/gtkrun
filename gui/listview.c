@@ -133,7 +133,7 @@ gr_list_view_set_model_by_text(
 	const gchar* text )
 {
 	GrListViewPrivate *priv;
-	GPtrArray *arr;
+	GStrv arr;
 	GtkStringList *string_list;
 
 	g_return_if_fail( GTK_IS_LIST_VIEW( self ) );
@@ -146,13 +146,13 @@ gr_list_view_set_model_by_text(
 	arr = gr_shared_get_compared_array( priv->shared, text );
 
 	/* if nothing to insert, reset the list view's model */
-	if( arr->len == 0 )
+	if( arr[0] == NULL )
 	{
 		gtk_list_view_set_model( self, NULL );
 		return;
 	}
 
-	string_list = gtk_string_list_new( (const gchar* const*)arr->pdata );
+	string_list = gtk_string_list_new( (const gchar* const*)arr );
 	gtk_list_view_set_model( self, GTK_SELECTION_MODEL( gtk_single_selection_new( G_LIST_MODEL( string_list ) ) ) );
 }
 

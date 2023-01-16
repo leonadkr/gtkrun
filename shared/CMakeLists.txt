@@ -6,6 +6,7 @@ pkg_check_modules( GIO2 REQUIRED gio-2.0 )
 
 add_library( ${PROJECT_NAME}
 	STATIC
+	array.c
 	shared.c )
 
 target_include_directories( ${PROJECT_NAME}
