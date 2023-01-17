@@ -608,11 +608,20 @@ gr_shared_set_stored_array(
 		goto out;
 	}
 
+	/* if file is empty, do nothing */
+	if( arr->size == 0 )
+	{
+		g_free( arr->data );
+		arr->data = NULL;
+		goto out;
+	}
+
 	/* replace EOL with '\0' */
 	arr->data = g_strdelimit( arr->data, EOL, '\0' );
 
 	/* count number of strings */
-	for( arr->n = 0, i = 0; i < arr->size; ++i )
+	arr->n = 0;
+	for( i = 0; i < arr->size; ++i )
 		if( arr->data[i] == '\0' )
 			arr->n++;
 
