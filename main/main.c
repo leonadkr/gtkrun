@@ -107,7 +107,7 @@ on_app_activate(
 	g_return_if_fail( G_IS_APPLICATION( self ) );
 
 	window = gr_window_new( self, shared );
-	gtk_widget_show( GTK_WIDGET( window ) );
+	gtk_widget_set_visible( GTK_WIDGET( window ), TRUE );
 }
 
 static gint
