@@ -85,6 +85,38 @@ Set path to the configure file. If not set, the program uses default:
 .RS 4
 Do not use any configure file.
 .RE
+.P
+.BR \-c ,
+.B \-\-conceal
+.RS 4
+Start the program in "conceal mode". The window will not show.
+.RE
+.P
+.BR \-e ,
+.B \-\-exhibit
+.RS 4
+In "conceal mode" show the program's window.
+.RE
+.P
+.BR \-r ,
+.B \-\-rescan
+.RS 4
+Rescan configuration file and directories in
+.I $PATH
+in "conceal mode".
+.RE
+.P
+.BR \-k ,
+.B \-\-kill
+.RS 4
+Kill the program in "conceal mode".
+.RE
+.P
+.BR \-d ,
+.B \-\-default
+.RS 4
+In "conceal mode" set the program's options to default.
+.RE
 .SH CUSTOM CONFIG
 You may create the textual config file
 .I $XDG_CONFIG_HOME/gtkrun/config
@@ -105,7 +137,32 @@ height = 400
 max_height = 400
 cache-dir = /path/to/cache/directory
 no_cache = false
+conceal = false
 .EE
+.SH CONCEAL MODE
+The program supports "conceal mode" with arguments
+.BR \-\-conceal " or " \-c ,
+that means the program will start normal, but will not show the window. To use the program in this mode you should run the same program with special arguments, it will send commands to the primary program via DBus.
+.P
+For example, run the program in "conceal mode" with
+.BR "gtkrun --conceal" ,
+then run
+.B "gtkrun --exhibit"
+to make the window visible. Now use the program normally and press
+.IR "[Esc]" " or " "[Enter]" ,
+the program will not terminate, just the window will be invisible. Run
+.BR "gtk --exhibit" ,
+and the window will be exhibited again to use the program as usual.
+.P
+To kill the program in "conceal mode" type and run
+.BR "gtkrun --kill" ". " "gtkrun --rescan"
+will force the program to rescan configuration file and directories in
+.IR $PATH .
+Running
+.B gtkrun
+with arguments
+.B \-\-default
+will set program options to default state.
 .SH FILES
 .IR $XDG_CONFIG_HOME/gtkrun/config ", " $HOME/.config/gtkrun/config
 .RS 4

@@ -1,11 +1,11 @@
 #include <glib.h>
 #include <gtk/gtk.h>
+#include "window.h"
 #include "listview.h"
 #include "shared.h"
 
 struct _GrListViewPrivate
 {
-	GtkWindow *window;
 	GrShared *shared;
 };
 typedef struct _GrListViewPrivate GrListViewPrivate;
@@ -30,7 +30,6 @@ gr_list_view_private_new(
 	g_return_val_if_fail( GTK_IS_LIST_VIEW( self ), NULL );
 
 	priv = g_new( GrListViewPrivate, 1 );
-	priv->window = NULL;
 	priv->shared = NULL;
 
 	g_object_set_qdata_full( G_OBJECT( self ), gr_list_view_private_quark(), priv, (GDestroyNotify)gr_list_view_private_free );
@@ -90,19 +89,17 @@ on_list_view_activate(
 	gr_shared_system_call( priv->shared, command );
 	g_free( command );
 
-	gtk_window_destroy( priv->window );
+	gr_window_close( priv->shared->window, priv->shared );
 }
 
 GtkListView*
 gr_list_view_new(
-	GtkWindow *window,
 	GrShared *shared )
 {
 	GrListViewPrivate *priv;
 	GtkListItemFactory *item_factory;
 	GtkListView *list_view;
 
-	g_return_val_if_fail( GTK_IS_WINDOW( window ), NULL );
 	g_return_val_if_fail( shared != NULL, NULL );
 
 	/* create tree view */
@@ -121,7 +118,6 @@ gr_list_view_new(
 
 	/* collect private */
 	priv = gr_list_view_private_new( list_view );
-	priv->window = window;
 	priv->shared = shared;
 
 	return list_view;

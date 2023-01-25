@@ -64,14 +64,14 @@ on_event_key_pressed(
 	GdkModifierType state,
 	gpointer user_data )
 {
-	GtkWindow *window = GTK_WINDOW( user_data );
-	GrWindowPrivate *priv = gr_window_get_private( window );
+	GrShared *shared = (GrShared*)user_data;
+	GrWindowPrivate *priv = gr_window_get_private( shared->window );
 	gchar *text;
 
 	if( ( keyval == GDK_KEY_q && ( state & GDK_CONTROL_MASK ) ) ||
 			keyval == GDK_KEY_Escape )
 	{
-		gtk_window_destroy( window );
+		gr_window_close( shared->window, shared );
 		return GDK_EVENT_STOP;
 	}
 
@@ -106,12 +106,10 @@ on_event_key_pressed(
 
 static GtkScrolledWindow*
 gr_scrolled_window_new(
-	GtkWindow *window,
 	GrShared *shared )
 {
 	GtkScrolledWindow *scrolled_window;
 
-	g_return_val_if_fail( GTK_IS_WINDOW( window ), NULL );
 	g_return_val_if_fail( shared != NULL, NULL );
 
 	scrolled_window = GTK_SCROLLED_WINDOW( gtk_scrolled_window_new() );
@@ -121,21 +119,11 @@ gr_scrolled_window_new(
 	gtk_scrolled_window_set_overlay_scrolling( scrolled_window, FALSE );
 	gtk_scrolled_window_set_propagate_natural_height( scrolled_window, TRUE );
 
-	/* if max-height is set, height is ignored */
-	if( shared->max_height_set )
-		gtk_scrolled_window_set_max_content_height( scrolled_window, shared->max_height );
-	else
-	{
-		gtk_scrolled_window_set_min_content_height( scrolled_window, shared->height );
-		gtk_scrolled_window_set_max_content_height( scrolled_window, shared->height );
-	}
-
 	return scrolled_window;
 }
 
 GtkWindow*
 gr_window_new(
-	GApplication *app,
 	GrShared *shared )
 {
 	GrWindowPrivate *priv;
@@ -146,26 +134,24 @@ gr_window_new(
 	GtkListView *list_view;
 	GtkEventControllerKey *event_key;
 
-	g_return_val_if_fail( G_IS_APPLICATION( app ), NULL );
 	g_return_val_if_fail( shared != NULL, NULL );
 
 	/* create window */
-	window = GTK_WINDOW( gtk_application_window_new( GTK_APPLICATION( app ) ) );
+	window = GTK_WINDOW( gtk_application_window_new( GTK_APPLICATION( shared->app ) ) );
 	gtk_window_set_title( window, PROGRAM_NAME );
 	gtk_window_set_resizable( window, FALSE );
 	gtk_window_set_decorated( window, FALSE );
-	gtk_window_set_default_size( window, shared->width, -1 );
 
 	/* bind event callback */
 	event_key = GTK_EVENT_CONTROLLER_KEY( gtk_event_controller_key_new() );
 	gtk_widget_add_controller( GTK_WIDGET( window ), GTK_EVENT_CONTROLLER( event_key ) );
-	g_signal_connect( G_OBJECT( event_key ), "key-pressed", G_CALLBACK( on_event_key_pressed ), window );
+	g_signal_connect( G_OBJECT( event_key ), "key-pressed", G_CALLBACK( on_event_key_pressed ), shared );
 
 	/* create widgets */
 	box = GTK_BOX( gtk_box_new( GTK_ORIENTATION_VERTICAL, 1 ) );
-	entry = gr_entry_new( window, shared );
-	scrolled_window = gr_scrolled_window_new( window, shared );
-	list_view = gr_list_view_new( window, shared );
+	entry = gr_entry_new( shared );
+	scrolled_window = gr_scrolled_window_new( shared );
+	list_view = gr_list_view_new( shared );
 
 	/* layout widgets */
 	gtk_scrolled_window_set_child( scrolled_window, GTK_WIDGET( list_view ) );
@@ -184,3 +170,55 @@ gr_window_new(
 	return window;
 }
 
+void
+gr_window_close(
+	GtkWindow *self,
+	GrShared *shared )
+{
+	g_return_if_fail( GTK_IS_WINDOW( self ) );
+	g_return_if_fail( shared != NULL );
+
+	if( shared->conceal )
+	{
+		/* gr_window_reset( self, shared ); */
+		gtk_widget_set_visible( GTK_WIDGET( self ), FALSE );
+		return;
+	}
+
+	gtk_window_destroy( self );
+}
+
+void
+gr_window_reset(
+	GtkWindow *self,
+	GrShared *shared )
+{
+	GrWindowPrivate *priv;
+
+	g_return_if_fail( GTK_IS_WINDOW( self ) );
+	g_return_if_fail( shared != NULL );
+
+	priv = gr_window_get_private( self );
+
+	gtk_window_set_default_size( self, shared->width, -1 );
+
+	/* if max-height is set, height is ignored */
+	if( shared->max_height_set )
+		gtk_scrolled_window_set_max_content_height( priv->scrolled_window, shared->max_height );
+	else
+	{
+		gtk_scrolled_window_set_min_content_height( priv->scrolled_window, shared->height );
+		gtk_scrolled_window_set_max_content_height( priv->scrolled_window, shared->height );
+	}
+
+	/* reset content of entry and list view */
+	gr_entry_set_text( priv->entry, "" );
+	gr_list_view_set_model_by_text( priv->list_view, "" );
+
+	/* make just entry visible */
+	gtk_widget_hide( GTK_WIDGET( priv->scrolled_window ) );
+	gtk_widget_show( GTK_WIDGET( priv->entry ) );
+	gtk_widget_grab_focus( GTK_WIDGET( priv->entry ) );
+	priv->is_entry_visible = TRUE;
+}
+	

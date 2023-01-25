@@ -31,6 +31,14 @@ Custom config example:
 	max_height = 400
 	cache-dir = /path/to/cache/directory
 	no_cache = false
+	conceal = false
+
+### Conceal mode
+The program supports "conceal mode" with arguments `--conceal` or `-c`, that means the program will start normal, but will not show the window. To use the program in this mode you should run the same program with special arguments, it will send commands to the primary program via DBus.
+
+For example, run the program in "conceal mode" with `gtkrun --conceal`, then run `gtkrun --exhibit` to make the window visible. Now use the program normally and press `[Esc]` or `Enter`, the program will not terminate, just the window will be invisible. Run `gtk --exhibit`, and the window will be exhibited again to use the program as usual.
+
+To kill the program in "conceal mode" type and run `gtkrun --kill`. `gtkrun --rescan` will force the program to rescan configuration file and directories in `$PATH`. Running `gtkrun` with arguments `--default` will set program options to default state.
 
 ## Build and install
 

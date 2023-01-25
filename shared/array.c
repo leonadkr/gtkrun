@@ -63,3 +63,26 @@ gr_array_sort(
 	qsort( (void*)self->p, self->n, sizeof( self->p[0] ), (int (*)(const void*, const void*))strpcmp0 );
 }
 
+void
+gr_array_add_string(
+	GrArray *self,
+	const gchar *str )
+{
+	gsize str_size;
+
+	g_return_if_fail( self != NULL );
+
+	/* nothing to do */
+	if( str == NULL )
+		return;
+
+	str_size = strlen( str ) + 1;
+
+	self->data = g_renew( gchar, self->data, self->size + str_size );
+	memcpy( &( self->data[self->size] ), str, str_size );
+	self->p = g_renew( gchar*, self->p, self->n + 1 );
+	self->p[self->n] = &( self->data[self->size] );
+	self->n++;
+	self->size += str_size;
+}
+

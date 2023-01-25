@@ -780,6 +780,9 @@ gr_shared_new(
 	self->config_path = NULL;
 	self->no_config = FALSE;
 	self->env = NULL;
+	self->conceal = FALSE;
+	self->app = NULL;
+	self->window = NULL;
 
 	self->envstr = NULL;
 	self->envarr = NULL;
@@ -921,7 +924,15 @@ gr_shared_system_call(
 		return;
 	}
 
+	/* store command to file */
 	gr_shared_store_command( self, command );
+
+	/* in conceal mode add command to stored_array */
+	if( self->conceal )
+	{
+		gr_array_add_string( self->stored_array, command );
+		gr_array_sort( self->stored_array );
+	}
 
 	if( self->silent )
 		flags = G_SUBPROCESS_FLAGS_STDOUT_SILENCE | G_SUBPROCESS_FLAGS_STDERR_SILENCE;

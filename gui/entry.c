@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <gtk/gtk.h>
+#include "window.h"
 #include "entry.h"
 #include "shared.h"
 
@@ -10,7 +11,6 @@ struct _GrEditablePrivate
 	gulong delete_text_handler_id;
 	guint insert_text_signal_id;
 	guint delete_text_signal_id;
-	GtkWindow *window;
 	GrShared *shared;
 };
 typedef struct _GrEditablePrivate GrEditablePrivate;
@@ -40,7 +40,6 @@ gr_editable_private_new(
 	priv->delete_text_handler_id = 0;
 	priv->insert_text_signal_id = 0;
 	priv->delete_text_signal_id = 0;
-	priv->window = NULL;
 	priv->shared = NULL;
 
 	g_object_set_qdata_full( G_OBJECT( self ), gr_editable_private_quark(), priv, (GDestroyNotify)gr_editable_private_free );
@@ -149,7 +148,7 @@ on_event_key_pressed(
 	{
 		command = gtk_editable_get_text( editable );
 		gr_shared_system_call( priv->shared, command );
-		gtk_window_destroy( priv->window );
+		gr_window_close( priv->shared->window, priv->shared );
 		return GDK_EVENT_STOP;
 	}
 
@@ -159,7 +158,6 @@ on_event_key_pressed(
 
 GtkEntry*
 gr_entry_new(
-	GtkWindow *window,
 	GrShared *shared )
 {
 	GtkEntry *entry;
@@ -167,7 +165,6 @@ gr_entry_new(
 	GtkEventControllerKey *event_key;
 	GrEditablePrivate *priv;
 
-	g_return_val_if_fail( GTK_IS_WINDOW( window ), NULL );
 	g_return_val_if_fail( shared != NULL, NULL );
 
 	/* create entry */
@@ -176,11 +173,10 @@ gr_entry_new(
 	/* get editable */
 	editable = gtk_editable_get_delegate( GTK_EDITABLE( entry ) );
 	priv = gr_editable_private_new( editable );
-	priv->insert_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "insert-text", G_CALLBACK( on_editable_insert_text ), window );
-	priv->delete_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "delete-text", G_CALLBACK( on_editable_delete_text ), window );
+	priv->insert_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "insert-text", G_CALLBACK( on_editable_insert_text ), NULL );
+	priv->delete_text_handler_id = g_signal_connect_after( G_OBJECT( editable ), "delete-text", G_CALLBACK( on_editable_delete_text ), NULL );
 	priv->insert_text_signal_id = g_signal_lookup( "insert-text", GTK_TYPE_EDITABLE );
 	priv->delete_text_signal_id = g_signal_lookup( "delete-text", GTK_TYPE_EDITABLE );
-	priv->window = window;
 	priv->shared = shared;
 
 	/* event handler */

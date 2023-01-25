@@ -17,6 +17,9 @@ struct _GrShared
 	gchar *config_path;
 	gboolean no_config;
 	gchar *env;
+	gboolean conceal;
+	gpointer app;
+	gpointer window;
 
 	/* private */
 	gchar *envstr;
