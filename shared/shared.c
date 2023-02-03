@@ -584,8 +584,8 @@ gr_shared_set_stored_array(
 	GrShared *self )
 {
 	GFile *file;
-	GrArray *arr;
-	gsize i;
+	gchar *data = NULL;
+	gsize size;
 	GError *error = NULL;
 
 	g_return_if_fail( self != NULL );
@@ -594,11 +594,9 @@ gr_shared_set_stored_array(
 	if( self->stored_path == NULL )
 		return;
 
-	arr = self->stored_array;
-
 	/* read file */
 	file = g_file_new_for_path( self->stored_path );
-	g_file_load_contents( file, NULL, &( arr->data ), &( arr->size ), NULL, &error );
+	g_file_load_contents( file, NULL, &data, &size, NULL, &error );
 	if( error != NULL )
 	{
 		/* the file may not exist */
@@ -609,35 +607,19 @@ gr_shared_set_stored_array(
 	}
 
 	/* if file is empty, do nothing */
-	if( arr->size == 0 )
+	if( size == 0 )
 	{
-		g_free( arr->data );
-		arr->data = NULL;
+		g_free( data );
 		goto out;
 	}
 
 	/* replace EOL with '\0' */
-	arr->data = g_strdelimit( arr->data, EOL, '\0' );
+	data = g_strdelimit( data, EOL, '\0' );
 
-	/* count number of strings */
-	arr->n = 0;
-	for( i = 0; i < arr->size; ++i )
-		if( arr->data[i] == '\0' )
-			arr->n++;
-
-	/* create pointer array */
-	arr->p = g_new( gchar*, arr->n );
-
-	/* connect pointers to data */
-	arr->p[0] = arr->data;
-	for( i = 1; i < arr->n; ++i )
-		arr->p[i] = strchr( arr->p[i-1], (int)'\0' ) + 1;
-
-	/* strip string in array */
-	for( i = 0; i < arr->n; ++i )
-		arr->p[i] = g_strstrip( arr->p[i] );
-
-	gr_array_sort( arr );
+	/* make new array */
+	gr_array_free( self->stored_array );
+	self->stored_array = gr_array_new_from_stolen_data( data, size );
+	gr_array_sort( self->stored_array );
 
 out:
 	g_object_unref( G_OBJECT( file ) );
@@ -725,6 +707,13 @@ gr_shared_store_command(
 	/* if command is already in stored_array, do nothing */
 	if( gr_array_find_equal( self->stored_array, command ) )
 		return;
+
+	/* in conceal mode add command to stored_array */
+	if( self->conceal )
+	{
+		gr_array_add_string( self->stored_array, command );
+		gr_array_sort( self->stored_array );
+	}
 
 	/* try to create cache dir */
 	if( !create_cache_dir( self->cache_dir ) )
@@ -926,13 +915,6 @@ gr_shared_system_call(
 
 	/* store command to file */
 	gr_shared_store_command( self, command );
-
-	/* in conceal mode add command to stored_array */
-	if( self->conceal )
-	{
-		gr_array_add_string( self->stored_array, command );
-		gr_array_sort( self->stored_array );
-	}
 
 	if( self->silent )
 		flags = G_SUBPROCESS_FLAGS_STDOUT_SILENCE | G_SUBPROCESS_FLAGS_STDERR_SILENCE;

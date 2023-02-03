@@ -38,6 +38,43 @@ gr_array_free(
 	g_free( self );
 }
 
+GrArray*
+gr_array_new_from_stolen_data(
+	gchar *data,
+	gsize size )
+{
+	GrArray *self;
+	gsize i;
+
+	/* nothing to do */
+	if( data == NULL || size == 0 )
+		return NULL;
+
+	self = gr_array_new();
+	self->data = data;
+	self->size = size;
+
+	/* count number of strings */
+	self->n = 0;
+	for( i = 0; i < self->size; ++i )
+		if( self->data[i] == '\0' )
+			self->n++;
+
+	/* create pointer array */
+	self->p = g_new( gchar*, self->n );
+
+	/* connect pointers to data */
+	self->p[0] = self->data;
+	for( i = 1; i < self->n; ++i )
+		self->p[i] = strchr( self->p[i-1], (int)'\0' ) + 1;
+
+	/* strip string in array */
+	for( i = 0; i < self->n; ++i )
+		self->p[i] = g_strstrip( self->p[i] );
+	
+	return self;
+}
+
 gboolean
 gr_array_find_equal(
 	GrArray *self,
@@ -68,7 +105,8 @@ gr_array_add_string(
 	GrArray *self,
 	const gchar *str )
 {
-	gsize str_size;
+	gchar *data;
+	gsize size, str_size;
 
 	g_return_if_fail( self != NULL );
 
@@ -77,12 +115,12 @@ gr_array_add_string(
 		return;
 
 	str_size = strlen( str ) + 1;
+	size = self->size + str_size;
+	data = g_new( gchar, size );
+	memcpy( data, self->data, self->size );
+	memcpy( &( data[self->size] ), str, str_size );
 
-	self->data = g_renew( gchar, self->data, self->size + str_size );
-	memcpy( &( self->data[self->size] ), str, str_size );
-	self->p = g_renew( gchar*, self->p, self->n + 1 );
-	self->p[self->n] = &( self->data[self->size] );
-	self->n++;
-	self->size += str_size;
+	gr_array_free( self );
+	self = gr_array_new_from_stolen_data( data, size );
 }
 
