@@ -83,8 +83,8 @@ on_event_key_pressed(
 			gr_list_view_set_model_by_text( priv->list_view, text );
 			g_free( text );
 
-			gtk_widget_hide( GTK_WIDGET( priv->entry ) );
-			gtk_widget_show( GTK_WIDGET( priv->scrolled_window ) );
+			gtk_widget_set_visible( GTK_WIDGET( priv->entry ), FALSE );
+			gtk_widget_set_visible( GTK_WIDGET( priv->scrolled_window ), TRUE );
 			gtk_widget_grab_focus( GTK_WIDGET( priv->list_view ) );
 		}
 		else
@@ -93,8 +93,8 @@ on_event_key_pressed(
 			gr_entry_set_text( priv->entry, text );
 			g_free( text );
 
-			gtk_widget_hide( GTK_WIDGET( priv->scrolled_window ) );
-			gtk_widget_show( GTK_WIDGET( priv->entry ) );
+			gtk_widget_set_visible( GTK_WIDGET( priv->scrolled_window ), FALSE );
+			gtk_widget_set_visible( GTK_WIDGET( priv->entry ), TRUE );
 			gtk_widget_grab_focus( GTK_WIDGET( priv->entry ) );
 		}
 		priv->is_entry_visible = !priv->is_entry_visible;
@@ -158,7 +158,7 @@ gr_window_new(
 	gtk_window_set_child( window, GTK_WIDGET( box ) );
 	gtk_box_append( box, GTK_WIDGET( entry ) );
 	gtk_box_append( box, GTK_WIDGET( scrolled_window ) );
-	gtk_widget_hide( GTK_WIDGET( scrolled_window ) );
+	gtk_widget_set_visible( GTK_WIDGET( scrolled_window ), FALSE );
 
 	/* collect private */
 	priv = gr_window_private_new( window );
@@ -216,8 +216,8 @@ gr_window_reset(
 	gr_list_view_set_model_by_text( priv->list_view, "" );
 
 	/* make just entry visible */
-	gtk_widget_hide( GTK_WIDGET( priv->scrolled_window ) );
-	gtk_widget_show( GTK_WIDGET( priv->entry ) );
+	gtk_widget_set_visible( GTK_WIDGET( priv->scrolled_window ), FALSE );
+	gtk_widget_set_visible( GTK_WIDGET( priv->entry ), TRUE );
 	gtk_widget_grab_focus( GTK_WIDGET( priv->entry ) );
 	priv->is_entry_visible = TRUE;
 }
