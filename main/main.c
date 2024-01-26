@@ -144,7 +144,7 @@ on_app_activate(
 
 	g_application_hold( self );
 	gr_window_reset( shared->window, shared );
-	gtk_widget_set_visible( GTK_WIDGET( shared->window ), TRUE );
+	gtk_window_present( shared->window );
 	g_application_release( self );
 }
 
