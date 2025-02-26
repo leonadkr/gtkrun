@@ -5,7 +5,7 @@ This program launches applications in a graphical environment supported by GTK4.
 ### Run
 Just run `gtkrun` when you are in X or Wayland (not tested). You can add some options, `gtkrun --help` will show them.
 
-At start the program scans the cache file (if `no-cache` is not set) and the environment variable `$PATH` for binary directories. In cache directory it creates cache files: One of them (`stored`) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (`env.cache`) includes data from `$PATH`, you can not modify it, but freely remove, it will be created at next start.
+At start the program scans the cache file (if `no-cache` is not set) and the environment variable `$PATH` for binary directories. In cache directory it creates cache files. One of them (`com.list`) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (`env.cache`) includes data from `$PATH`, you can not modify it, but freely remove, it will be created at next start.
 
 ### Dialog
 Start typing and the program will complete your command:
@@ -14,7 +14,7 @@ Start typing and the program will complete your command:
 
 Press `[Tab]` button to see the list of all completions:
 
-![treeview completition](readme.d/treeview_completion.gif)
+![list_view completition](readme.d/list_view_completion.gif)
 
 Next just press `[Enter]` to execute command: either from the entry or from the list.
 Press `[Esc]` or `[Ctrl-q]` to terminate the program.
@@ -38,7 +38,7 @@ The program supports "conceal mode" with arguments `--conceal` or `-c`, that mea
 
 For example, run the program in "conceal mode" with `gtkrun --conceal`, then run `gtkrun --exhibit` to make the window visible. Now use the program normally and press `[Esc]` or `Enter`, the program will not terminate, just the window will be invisible. Run `gtk --exhibit`, and the window will be exhibited again to use the program as usual.
 
-To kill the program in "conceal mode" type and run `gtkrun --kill`. `gtkrun --rescan` will force the program to rescan configuration file and directories in `$PATH`. Running `gtkrun` with arguments `--default` will set program options to default state.
+To kill the program in "conceal mode" type and run `gtkrun --kill`.
 
 ## Build and install
 

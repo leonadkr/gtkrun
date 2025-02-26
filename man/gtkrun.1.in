@@ -1,23 +1,23 @@
-.TH GTKRUN 1 "2022-10-21" "gtkrun version @PROGRAM_VERSION@"
+.TH @PROGRAM_NAME@ 1 "@PROGRAM_TIMESTAMP@" "@PROGRAM_NAME@ version @PROGRAM_VERSION@"
 .SH NAME
-gtkrun \- an application launcher.
+@PROGRAM_NAME@ \- an application launcher.
 .SH SYNOPSIS
-.BR "gtkrun " [ OPTIONS ]
+.BR "@PROGRAM_NAME@ " [ OPTIONS ]
 .SH DESCRIPTION
-.B gtkrun
+.B @PROGRAM_NAME@
 launches applications in a graphical environment supported by GTK4. Just run
-.B gtkrun
+.B @PROGRAM_NAME@
 when you are in X or Wayland (not tested). At start the program scans the cache file (if
 .B --no-cache
 is not set) and the environment variable
 .I $PATH
 for binary directories. In cache directory it creates cache files. One of them (
-.B stored
+.B @PROGRAM_COMMANDS_LIST_FILE@
 ) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (
-.B env.cache
+.B @PROGRAM_ENVIRONMENT_CACHE_FILE@
 ) includes data from
 .I $PATH
-, you can not modify it, but freely remove, it will be created at next start.
+, you can not modify it, but freely remove, it will be created at the next start.
 .PP
 Start typing and the program will complete your command. Press
 .I [Tab]
@@ -59,25 +59,25 @@ is ignored. The window will adjust height, but not bigger than
 .RE
 .P
 .BR \-a ,
-.B\-\-cache-dir
+.B \-\-cache-dir
 .I CACHE_DIR
 .RS 4
 Set path to the cache directory. If not set, the program uses default:
-.IR "$XDG_CACHE_HOME/gtkrun" " or " "$HOME/.cache/gtkrun" .
+.IR "$XDG_CACHE_HOME/@PROGRAM_NAME@" " or " "$HOME/.cache/@PROGRAM_NAME@" .
 .RE
 .P
 .BR \-A ,
-.B\-\-no\-cache
+.B \-\-no\-cache
 .RS 4
 Do not use any cache file.
 .RE
 .P
 .BR \-o ,
-.B\-\-config
-.I CONFIG_FILE
+.B \-\-config
+.I CONFIG_PATH
 .RS 4
 Set path to the configure file. If not set, the program uses default:
-.IR "$XDG_CONFIG_HOME/gtkrun/config" " or " "$HOME/.config/gtkrun/config" .
+.IR "$XDG_CONFIG_HOME/@PROGRAM_NAME@/config" " or " "$HOME/.config/@PROGRAM_NAME@/config" .
 .RE
 .P
 .BR \-O ,
@@ -98,30 +98,16 @@ Start the program in "conceal mode". The window will not show.
 In "conceal mode" show the program's window.
 .RE
 .P
-.BR \-r ,
-.B \-\-rescan
-.RS 4
-Rescan configuration file and directories in
-.I $PATH
-in "conceal mode".
-.RE
-.P
 .BR \-k ,
 .B \-\-kill
 .RS 4
 Kill the program in "conceal mode".
 .RE
-.P
-.BR \-d ,
-.B \-\-default
-.RS 4
-In "conceal mode" set the program's options to default.
-.RE
 .SH CUSTOM CONFIG
 You may create the textual config file
-.I $XDG_CONFIG_HOME/gtkrun/config
+.I $XDG_CONFIG_HOME/@PROGRAM_NAME@/config
 (or
-.I $HOME/.config/gtkrun/config
+.I $HOME/.config/@PROGRAM_NAME@/config
 ), that will be scanned at the program start, or set
 .B \-\-no-config
 argument to ignore the config file. Arguments added to the program will overwrite appropriate config lines.
@@ -145,9 +131,9 @@ The program supports "conceal mode" with arguments
 that means the program will start normal, but will not show the window. To use the program in this mode you should run the same program with special arguments, it will send commands to the primary program via DBus.
 .P
 For example, run the program in "conceal mode" with
-.BR "gtkrun --conceal" ,
+.BR "@PROGRAM_NAME@ --conceal" ,
 then run
-.B "gtkrun --exhibit"
+.B "@PROGRAM_NAME@ --exhibit"
 to make the window visible. Now use the program normally and press
 .IR "[Esc]" " or " "[Enter]" ,
 the program will not terminate, just the window will be invisible. Run
@@ -155,32 +141,25 @@ the program will not terminate, just the window will be invisible. Run
 and the window will be exhibited again to use the program as usual.
 .P
 To kill the program in "conceal mode" type and run
-.BR "gtkrun --kill" ". " "gtkrun --rescan"
-will force the program to rescan configuration file and directories in
-.IR $PATH .
-Running
-.B gtkrun
-with arguments
-.B \-\-default
-will set program options to default state.
+.BR "@PROGRAM_NAME@ --kill" "."
 .SH FILES
-.IR $XDG_CONFIG_HOME/gtkrun/config ", " $HOME/.config/gtkrun/config
+.IR $XDG_CONFIG_HOME/@PROGRAM_NAME@/config ", " $HOME/.config/@PROGRAM_NAME@/config
 .RS 4
 stores configuration of the program, read at start if
 .B \-\-no-config
 is not set; 
 .RE
 .P
-.IR $XDG_CACHE_HOME/gtkrun/stored ", " $HOME/.cache/gtkrun/stored
+.IR $XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_COMMANDS_LIST_FILE@ ", " $HOME/.cache/@PROGRAM_NAME@/@PROGRAM_COMMANDS_LIST_FILE@
 .RS 4
 stores recently executed commands, you can freely modify this textual file;
 .RE
 .P
-.IR $XDG_CACHE_HOME/gtkrun/env.cache ", " $HOME/.cache/gtkrun/env.cache
+.IR $XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_ENVIRONMENT_CACHE_FILE@ ", " $HOME/.cache/@PROGRAM_NAME@/@PROGRAM_ENVIRONMENT_CACHE_FILE@
 .RS 4
 stores binary data from
 .IR $PATH ,
 can not be modified, but freely removed, it will be created at start;
 .RE
 .SH AUTHOR
-leonadkr@gmail.com
+@PROGRAM_AUTHOR@
