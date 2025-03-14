@@ -10,8 +10,7 @@ set( PROGRAM_AUTHOR "leonadkr@gmail.com" )
 
 set( PROGRAM_ENVIRONMENT_PATH "PATH" )
 set( PROGRAM_CONFIGURE_FILE "config" )
-set( PROGRAM_ENVIRONMENT_CACHE_FILE "env.cache" )
-set( PROGRAM_COMMANDS_LIST_FILE "com.list" )
+set( PROGRAM_COMMAND_CACHE_FILE "command.cache" )
 
 if( CMAKE_HOST_WIN32 )
 	set( PROGRAM_LINE_BREAKER "\\r\\n" )

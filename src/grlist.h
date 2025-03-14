@@ -1,6 +1,8 @@
 #ifndef GRLIST_H
 #define GRLIST_H
 
+#include "grcommandlist.h"
+
 #include <glib-object.h>
 #include <glib.h>
 #include <gio/gio.h>

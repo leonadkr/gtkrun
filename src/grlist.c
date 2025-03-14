@@ -9,9 +9,6 @@ struct _GrList
 {
 	GtkWidget parent_instance;
 
-	gint min_content_height;
-	gint max_content_height;
-
 	GtkScrolledWindow *scrolled_window;
 	GtkListView *list_view;
 };
@@ -78,8 +75,11 @@ on_list_view_activate(
 	gpointer user_data )
 {
 	GrList *list = GR_LIST( user_data );
+	gchar *text;
 	
-	g_signal_emit( list, gr_list_signals[SIGNAL_ACTIVATE], 0 );
+	text = gr_list_get_selected_text( list );
+	g_signal_emit( list, gr_list_signals[SIGNAL_ACTIVATE], 0, text );
+	g_free( text );
 }
 
 static void
@@ -107,9 +107,6 @@ gr_list_init(
 
 	g_signal_connect( G_OBJECT( self->list_view ), "activate", G_CALLBACK( on_list_view_activate ), self );
 
-	g_object_bind_property( G_OBJECT( self ), "min-content-height", G_OBJECT( self->scrolled_window ), "min-content-height", G_BINDING_DEFAULT );
-	g_object_bind_property( G_OBJECT( self ), "max-content-height", G_OBJECT( self->scrolled_window ), "max-content-height", G_BINDING_DEFAULT );
-
 	/*layout widgets */
 	gtk_widget_set_parent( GTK_WIDGET( self->scrolled_window ), GTK_WIDGET( self ) );
 	gtk_scrolled_window_set_child( self->scrolled_window, GTK_WIDGET( self->list_view ) );
@@ -127,10 +124,10 @@ gr_list_get_property(
 	switch( (GrListPropertyID)prop_id )
 	{
 		case PROP_MIN_CONTENT_HEIGHT:
-			g_value_set_int( value, self->min_content_height );
+			g_value_set_int( value, gtk_scrolled_window_get_min_content_height( self->scrolled_window ) );
 			break;
 		case PROP_MAX_CONTENT_HEIGHT:
-			g_value_set_int( value, self->max_content_height );
+			g_value_set_int( value, gtk_scrolled_window_get_max_content_height( self->scrolled_window ) );
 			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID( object, prop_id, pspec );
@@ -168,6 +165,8 @@ gr_list_dispose(
 	GrList *self = GR_LIST( object );
 
 	gtk_widget_unparent( GTK_WIDGET( self->scrolled_window ) );
+
+	G_OBJECT_CLASS( gr_list_parent_class )->dispose( object );
 }
 
 static void
@@ -208,7 +207,8 @@ gr_list_class_init(
 		NULL,
 		NULL,
 		G_TYPE_NONE,
-		0 );
+		1,
+		G_TYPE_STRING );
 
 	gtk_widget_class_set_layout_manager_type( widget_class, GTK_TYPE_BIN_LAYOUT );
 }
@@ -226,7 +226,7 @@ gr_list_get_min_content_height(
 {
 	g_return_val_if_fail( GR_IS_LIST( self ), 0 );
 
-	return self->min_content_height;
+	return gtk_scrolled_window_get_min_content_height( self->scrolled_window );
 }
 
 void
@@ -238,7 +238,7 @@ gr_list_set_min_content_height(
 
 	g_object_freeze_notify( G_OBJECT( self ) );
 
-	self->min_content_height = height;
+	gtk_scrolled_window_set_min_content_height( self->scrolled_window, height );
 
 	g_object_notify_by_pspec( G_OBJECT( self ), object_props[PROP_MIN_CONTENT_HEIGHT] );
 
@@ -251,7 +251,7 @@ gr_list_get_max_content_height(
 {
 	g_return_val_if_fail( GR_IS_LIST( self ), 0 );
 
-	return self->max_content_height;
+	return gtk_scrolled_window_get_max_content_height( self->scrolled_window );
 }
 
 void
@@ -263,7 +263,7 @@ gr_list_set_max_content_height(
 
 	g_object_freeze_notify( G_OBJECT( self ) );
 
-	self->max_content_height = height;
+	gtk_scrolled_window_set_max_content_height( self->scrolled_window, height );
 
 	g_object_notify_by_pspec( G_OBJECT( self ), object_props[PROP_MAX_CONTENT_HEIGHT] );
 
