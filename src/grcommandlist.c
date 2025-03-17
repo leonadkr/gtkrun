@@ -10,9 +10,9 @@ struct _GrCommandList
 {
 	GObject parent_instance;
 
-	gchar *com_file_path;
+	gchar *his_file_path;
 
-	GStrv com_arr;
+	GStrv his_arr;
 	GSList *env_list;
 };
 typedef struct _GrCommandList GrCommandList;
@@ -21,7 +21,7 @@ enum _GrCommandListPropertyID
 {
 	PROP_0, /* 0 is reserved for GObject */
 
-	PROP_COMMAND_FILE_PATH,
+	PROP_HISTORY_FILE_PATH,
 
 	N_PROPS
 };
@@ -32,7 +32,7 @@ static GParamSpec *object_props[N_PROPS] = { NULL, };
 G_DEFINE_TYPE( GrCommandList, gr_command_list, G_TYPE_OBJECT )
 
 static void
-gr_command_list_load_command_array(
+gr_command_list_load_history_array(
 	GrCommandList *self )
 {
 	GFile *file;
@@ -43,12 +43,12 @@ gr_command_list_load_command_array(
 
 	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
 
-	g_print( "gr_command_list_load_command_list()\n" );
+	g_print( "gr_command_list_load_history_array()\n" );
 
 	/* if the file cannot be loaded, do nothing */
-	if( self->com_file_path == NULL )
+	if( self->his_file_path == NULL )
 		return;
-	file = g_file_new_for_path( self->com_file_path );
+	file = g_file_new_for_path( self->his_file_path );
 	if( !g_file_load_contents( file, NULL, &text_locale, &size, NULL, NULL ) )
 	{
 		g_object_unref( G_OBJECT( file ) );
@@ -70,8 +70,8 @@ gr_command_list_load_command_array(
 		arr[last_idx] = NULL;
 	}
 
-	g_strfreev( self->com_arr );
-	self->com_arr = arr;
+	g_strfreev( self->his_arr );
+	self->his_arr = arr;
 }
 
 static GSList*
@@ -130,11 +130,11 @@ static void
 gr_command_list_init(
 	GrCommandList *self )
 {
-	self->com_file_path = NULL;
+	self->his_file_path = NULL;
 
 	/* setup empty command array */
-	self->com_arr = g_new( gchar*, 1 );
-	self->com_arr[0] = NULL;
+	self->his_arr = g_new( gchar*, 1 );
+	self->his_arr[0] = NULL;
 
 	self->env_list = gr_command_list_load_environment_binaries_list( PROGRAM_ENVIRONMENT_PATH );
 }
@@ -147,8 +147,8 @@ gr_command_list_finalize(
 
 	g_print( "gr_command_list_finalize()\n" );
 
-	g_free( self->com_file_path );
-	g_strfreev( self->com_arr );
+	g_free( self->his_file_path );
+	g_strfreev( self->his_arr );
 	g_slist_free_full( self->env_list, (GDestroyNotify)g_free );
 
 	G_OBJECT_CLASS( gr_command_list_parent_class )->finalize( object );
@@ -165,8 +165,8 @@ gr_command_list_get_property(
 
 	switch( (GrCommandListPropertyID)prop_id )
 	{
-		case PROP_COMMAND_FILE_PATH:
-			g_value_set_string( value, self->com_file_path );
+		case PROP_HISTORY_FILE_PATH:
+			g_value_set_string( value, self->his_file_path );
 			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID( object, prop_id, pspec );
@@ -185,8 +185,8 @@ gr_command_list_set_property(
 
 	switch( (GrCommandListPropertyID)prop_id )
 	{
-		case PROP_COMMAND_FILE_PATH:
-			gr_command_list_set_command_file_path( self, g_value_get_string( value ) );
+		case PROP_HISTORY_FILE_PATH:
+			gr_command_list_set_history_file_path( self, g_value_get_string( value ) );
 			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID( object, prop_id, pspec );
@@ -204,9 +204,9 @@ gr_command_list_class_init(
 	object_class->get_property = gr_command_list_get_property;
 	object_class->set_property = gr_command_list_set_property;
 
-	object_props[PROP_COMMAND_FILE_PATH] = g_param_spec_string(
-		"command-file-path",
-		"Command file path",
+	object_props[PROP_HISTORY_FILE_PATH] = g_param_spec_string(
+		"history-file-path",
+		"History file path",
 		"Path to the file containing the list of commands",
 		NULL,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS );
@@ -227,38 +227,38 @@ strncmp0(
 
 GrCommandList*
 gr_command_list_new(
-	const gchar *com_file_path )
+	const gchar *his_file_path )
 {
 	g_print( "gr_command_list_new()\n" );
 
-	return GR_COMMAND_LIST( g_object_new( GR_TYPE_COMMAND_LIST, "command-file-path", com_file_path, NULL ) );
+	return GR_COMMAND_LIST( g_object_new( GR_TYPE_COMMAND_LIST, "history-file-path", his_file_path, NULL ) );
 }
 
 gchar*
-gr_command_list_get_command_file_path(
+gr_command_list_get_history_file_path(
 	GrCommandList *self )
 {
 	g_return_val_if_fail( GR_IS_COMMAND_LIST( self ), NULL );
 
-	return g_strdup( self->com_file_path );
+	return g_strdup( self->his_file_path );
 }
 
 void
-gr_command_list_set_command_file_path(
+gr_command_list_set_history_file_path(
 	GrCommandList *self,
 	const gchar *path )
 {
 	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
 
-	g_print( "gr_command_list_set_command_list_path()\n" );
+	g_print( "gr_command_list_set_history_file_path()\n" );
 
 	g_object_freeze_notify( G_OBJECT( self ) );
 
-	g_free( self->com_file_path );
-	self->com_file_path = g_strdup( path );
-	gr_command_list_load_command_array( self );
+	g_free( self->his_file_path );
+	self->his_file_path = g_strdup( path );
+	gr_command_list_load_history_array( self );
 
-	g_object_notify_by_pspec( G_OBJECT( self ), object_props[PROP_COMMAND_FILE_PATH] );
+	g_object_notify_by_pspec( G_OBJECT( self ), object_props[PROP_HISTORY_FILE_PATH] );
 
 	g_object_thaw_notify( G_OBJECT( self ) );
 }
@@ -275,12 +275,14 @@ gr_command_list_get_compared_string(
 
 	g_print( "gr_command_list_get_compared_string()\n" );
 
+	g_return_val_if_fail( GR_IS_COMMAND_LIST( self ), NULL );
+
 	if( str == NULL || *str == '\0' )
 		return NULL;
 
 	str_len = strlen( str );
 
-	for( a = self->com_arr; *a != NULL; ++a )
+	for( a = self->his_arr; *a != NULL; ++a )
 		if( strncmp0( *a, str, str_len ) == 0 )
 			return g_strdup( *a );
 
@@ -303,13 +305,14 @@ gr_command_list_get_compared_array(
 	GrCommandList *self,
 	const gchar *str )
 {
-	gsize str_len;
+	gsize str_len, list_len;
 	GStrv arr, a;
 	GSList *l, *list;
-	guint list_len;
 	gint res;
 
 	g_print( "gr_command_list_get_compared_array()\n" );
+
+	g_return_val_if_fail( GR_IS_COMMAND_LIST( self ), NULL );
 
 	if( str == NULL || *str == '\0' )
 		return NULL;
@@ -317,9 +320,13 @@ gr_command_list_get_compared_array(
 	str_len = strlen( str );
 
 	list = NULL;
-	for( a = self->com_arr; *a != NULL; ++a )
+	list_len = 0;
+	for( a = self->his_arr; *a != NULL; ++a )
 		if( strncmp0( *a, str, str_len ) == 0 )
+		{
 			list = g_slist_prepend( list, *a );
+			++list_len;
+		}
 
 	for( l = self->env_list; l != NULL; l = l->next )
 	{
@@ -328,17 +335,22 @@ gr_command_list_get_compared_array(
 		if( res > 0 )
 			break;
 
-		/* ignore strings already in the list */
+		/* ignore a string already in the list */
 		if( res == 0 && g_slist_find_custom( list, (const gchar*)l->data, (GCompareFunc)g_strcmp0 ) == NULL )
-				list = g_slist_prepend( list, (gchar*)l->data );
+		{
+			list = g_slist_prepend( list, (gchar*)l->data );
+			++list_len;
+		}
 	}
 
-	list = g_slist_reverse( list );
-	list_len = g_slist_length( list );
+	if( list == NULL )
+		return NULL;
+
 	arr = g_new( gchar*, list_len + 1 );
 	arr[list_len] = NULL;
-	for( a = arr, l = list; l != NULL ; l = l->next, ++a )
+	for( a = &arr[list_len-1], l = list; l != NULL ; l = l->next, --a )
 		*a = g_strdup( (const gchar*)l->data );
+	g_slist_free( list );
 
 	return arr;
 }
@@ -355,34 +367,34 @@ gr_command_list_push(
 	gsize s_locale_len;
 	GError *error = NULL;
 
-	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
-
 	g_print( "gr_command_list_push()\n" );
 
+	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
+
 	/* nothing to push */
-	if( text == NULL || strlen( text ) == 0 )
+	if( text == NULL || *text == '\0' )
 		return;
 
-	/* if com_arr already contains text, do nothing */
-	if( g_strv_contains( (const gchar**)self->com_arr, text ) )
+	/* if his_arr already contains text, do nothing */
+	if( g_strv_contains( (const gchar**)self->his_arr, text ) )
 		return;
 
 	/* append text to array */
 	builder = g_strv_builder_new();
-	g_strv_builder_addv( builder, (const gchar**)self->com_arr );
+	g_strv_builder_addv( builder, (const gchar**)self->his_arr );
 	g_strv_builder_add( builder, g_strdup( text ) );
 	arr = g_strv_builder_end( builder );
 	g_strv_builder_unref( builder );
 
-	g_strfreev( self->com_arr );
-	self->com_arr = arr;
+	g_strfreev( self->his_arr );
+	self->his_arr = arr;
 
-	/* no file path, array will not be stored */
-	if( self->com_file_path == NULL )
+	/* if no file path, array will not be stored */
+	if( self->his_file_path == NULL )
 		return;
 
 	/* store array to the file */
-	file = g_file_new_for_path( self->com_file_path );
+	file = g_file_new_for_path( self->his_file_path );
 
 	/* if it cannot create directory, it will not store array */
 	dir = g_file_get_parent( file );
@@ -400,7 +412,7 @@ gr_command_list_push(
 	}
 	g_object_unref( G_OBJECT( dir ) );
 
-	s_locale = g_strjoinv( PROGRAM_LINE_BREAKER, self->com_arr );
+	s_locale = g_strjoinv( PROGRAM_LINE_BREAKER, self->his_arr );
 	s_utf8 = g_strconcat( s_locale, PROGRAM_LINE_BREAKER, NULL );
 	g_free( s_locale );
 

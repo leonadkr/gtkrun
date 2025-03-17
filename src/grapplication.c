@@ -18,8 +18,8 @@ struct _GrApplication
 	gint height;
 	gint max_height;
 	gboolean max_height_set;
-	gchar* cache_path;
-	gboolean no_cache;
+	gchar* history_path;
+	gboolean no_history;
 	gchar* config_path;
 	gboolean no_config;
 
@@ -37,8 +37,8 @@ enum _GrApplicationPropertyID
 	PROP_HEIGHT,
 	PROP_MAX_HEIGHT,
 	PROP_MAX_HEIGHT_SET,
-	PROP_CACHE_PATH,
-	PROP_NO_CACHE,
+	PROP_HISTORY_PATH,
+	PROP_NO_HISTORY,
 	PROP_CONFIG_PATH,
 	PROP_NO_CONFIG,
 	PROP_COMMAND_LIST,
@@ -61,14 +61,14 @@ gr_application_init(
 		{ "width", 'w', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window width", "WIDTH" },
 		{ "height", 'h', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window height", "HEIGHT" },
 		{ "max-height", 'm', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, NULL, "Window maximum height", "MAX_HEIGHT" },
-		{ "cache-path", 'a', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, NULL, "Path to cache file", "CACHE_PATH" },
-		{ "no-cache", 'A', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use cache file", NULL },
+		{ "history-path", 'a', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, NULL, "Path to history file", "HISTORY_PATH" },
+		{ "no-history", 'A', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use history file", NULL },
 		{ "config", 'c', G_OPTION_FLAG_NONE, G_OPTION_ARG_FILENAME, NULL, "Path to configure file", "CONFIG_PATH" },
 		{ "no-config", 'C', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, "Do not use configure file", NULL },
 		{ NULL }
 	};
 
-	gchar *program_name, *config_filename, *cache_filename;
+	gchar *program_name, *config_filename, *history_filename;
 
 	g_application_set_option_context_description( G_APPLICATION( self ), PROGRAM_APPLICATION_DESCRIPTION );
 	g_application_set_option_context_summary( G_APPLICATION( self ), PROGRAM_APPLICATION_SUMMARY );
@@ -77,21 +77,21 @@ gr_application_init(
 
 	program_name = g_filename_from_utf8( PROGRAM_NAME, -1, NULL, NULL, NULL );
 	config_filename = g_filename_from_utf8( PROGRAM_CONFIGURE_FILE, -1, NULL, NULL, NULL );
-	cache_filename = g_filename_from_utf8( PROGRAM_COMMAND_CACHE_FILE, -1, NULL, NULL, NULL );
+	history_filename = g_filename_from_utf8( PROGRAM_HISTORY_FILE, -1, NULL, NULL, NULL );
 
 	self->silent = FALSE;
 	self->width = PROGRAM_WINDOW_WIDTH;
 	self->height = PROGRAM_WINDOW_HEIGHT;
 	self->max_height = PROGRAM_WINDOW_MAX_HEIGHT;
 	self->max_height_set = FALSE;
-	self->cache_path = g_build_filename( g_get_user_cache_dir(), program_name, cache_filename, NULL );
-	self->no_cache = FALSE;
+	self->history_path = g_build_filename( g_get_user_cache_dir(), program_name, history_filename, NULL );
+	self->no_history = FALSE;
 	self->config_path = g_build_filename( g_get_user_config_dir(), program_name, config_filename, NULL );
 	self->no_config = FALSE;
 
 	g_free( program_name );
 	g_free( config_filename );
-	g_free( cache_filename );
+	g_free( history_filename );
 
 	self->window = NULL;
 	self->com_list = NULL;
@@ -116,7 +116,7 @@ gr_application_finalize(
 {
 	GrApplication *self = GR_APPLICATION( object );
 
-	g_free( self->cache_path );
+	g_free( self->history_path );
 	g_free( self->config_path );
 
 	G_OBJECT_CLASS( gr_application_parent_class )->finalize( object );
@@ -148,11 +148,11 @@ gr_application_get_property(
 		case PROP_MAX_HEIGHT_SET:
 			g_value_set_boolean( value, self->max_height_set );
 			break;
-		case PROP_CACHE_PATH:
-			g_value_set_string( value, self->cache_path );
+		case PROP_HISTORY_PATH:
+			g_value_set_string( value, self->history_path );
 			break;
-		case PROP_NO_CACHE:
-			g_value_set_boolean( value, self->no_cache );
+		case PROP_NO_HISTORY:
+			g_value_set_boolean( value, self->no_history );
 			break;
 		case PROP_CONFIG_PATH:
 			g_value_set_string( value, self->config_path );
@@ -180,10 +180,10 @@ gr_application_startup(
 	G_APPLICATION_CLASS( gr_application_parent_class )->startup( app );
 
 	/* create command list */
-	if( self->no_cache )
+	if( self->no_history )
 		self->com_list = gr_command_list_new( NULL );
 	else
-		self->com_list = gr_command_list_new( self->cache_path );
+		self->com_list = gr_command_list_new( self->history_path );
 
 	/* create window */
 	self->window = gr_window_new( self );
@@ -206,9 +206,9 @@ static void
 gr_application_parse_config(
 	GrApplication *self )
 {
-	gboolean silent, no_cache;
+	gboolean silent, no_history;
 	gint width, height, max_height;
-	gchar *cache_path;
+	gchar *history_path;
 	GKeyFile *key_file;
 	GError *error = NULL;
 
@@ -250,21 +250,21 @@ gr_application_parse_config(
 		self->max_height_set = TRUE;
 	}
 
-	cache_path = g_key_file_get_string( key_file, "Main", "cache-path", &error );
+	history_path = g_key_file_get_string( key_file, "Main", "history-path", &error );
 	if( error != NULL )
 		g_clear_error( &error );
 	else
 	{
-		g_free( self->cache_path );
-		self->cache_path = g_filename_from_utf8( cache_path, -1, NULL, NULL, NULL );
-		g_free( cache_path );
+		g_free( self->history_path );
+		self->history_path = g_filename_from_utf8( history_path, -1, NULL, NULL, NULL );
+		g_free( history_path );
 	}
 
-	no_cache = g_key_file_get_boolean( key_file, "Main", "no-cache", &error );
+	no_history = g_key_file_get_boolean( key_file, "Main", "no-history", &error );
 	if( error != NULL )
 		g_clear_error( &error );
 	else
-		self->no_cache = no_cache;
+		self->no_history = no_history;
 
 out:
 	g_key_file_free( key_file );
@@ -276,7 +276,7 @@ gr_application_handle_local_options(
 	GVariantDict *options )
 {
 	GrApplication *self = GR_APPLICATION( app );
-	gchar *config_path, *cache_path;
+	gchar *config_path, *history_path;
 
 	g_print( "gr_application_handle_local_options()\n" );
 
@@ -300,12 +300,12 @@ gr_application_handle_local_options(
 	if( g_variant_dict_lookup( options, "max-height", "i", &self->max_height ) )
 		self->max_height_set = TRUE;
 
-	g_variant_dict_lookup( options, "no-cache", "b", &self->no_cache );
+	g_variant_dict_lookup( options, "no-history", "b", &self->no_history );
 
-	if( g_variant_dict_lookup( options, "cache-path", "^ay", &cache_path ) )
+	if( g_variant_dict_lookup( options, "history-path", "^ay", &history_path ) )
 	{
-		g_free( self->cache_path );
-		self->cache_path = cache_path;
+		g_free( self->history_path );
+		self->history_path = history_path;
 	}
 
 	return -1;
@@ -358,16 +358,16 @@ gr_application_class_init(
 		"TRUE, if max-height is set",
 		FALSE,
 		G_PARAM_READABLE | G_PARAM_STATIC_STRINGS );
-	object_props[PROP_CACHE_PATH] = g_param_spec_string(
-		"cache-path",
-		"Cache path",
-		"Path to cache file",
+	object_props[PROP_HISTORY_PATH] = g_param_spec_string(
+		"history-path",
+		"History path",
+		"Path to history file",
 		NULL,
 		G_PARAM_READABLE | G_PARAM_STATIC_STRINGS );
-	object_props[PROP_NO_CACHE] = g_param_spec_boolean(
-		"no-cache",
-		"Not using cache",
-		"Do not use cache file",
+	object_props[PROP_NO_HISTORY] = g_param_spec_boolean(
+		"no-history",
+		"Not using history",
+		"Do not use history file",
 		FALSE,
 		G_PARAM_READABLE | G_PARAM_STATIC_STRINGS );
 	object_props[PROP_CONFIG_PATH] = g_param_spec_string(
@@ -450,21 +450,21 @@ gr_application_get_max_height_set(
 }
 
 gchar*
-gr_application_get_cache_path(
+gr_application_get_history_path(
 	GrApplication *self )
 {
 	g_return_val_if_fail( GR_IS_APPLICATION( self ), NULL );
 
-	return g_strdup( self->cache_path );
+	return g_strdup( self->history_path );
 }
 
 gboolean
-gr_application_get_no_cache(
+gr_application_get_no_history(
 	GrApplication *self )
 {
 	g_return_val_if_fail( GR_IS_APPLICATION( self ), FALSE );
 
-	return self->no_cache;
+	return self->no_history;
 }
 
 gchar*
