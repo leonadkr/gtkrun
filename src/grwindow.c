@@ -33,8 +33,6 @@ on_window_notify_application(
 {
 	GrCommandList *com_list;
 
-	g_print( "on_window_notify_application()\n" );
-
 	self->app = GR_APPLICATION( gtk_window_get_application( GTK_WINDOW( self ) ) );
 
 	/*setup window and widgets with the options from the application */
@@ -60,8 +58,6 @@ gr_window_switch_widgets(
 	GrCommandList *com_list;
 	gchar *text;
 	GStrv arr;
-
-	g_print( "window_switch_widgets()\n" );
 
 	if( self->is_entry_visible )
 	{
@@ -131,8 +127,6 @@ on_widget_activate(
 	GrCommandList *com_list;
 	GError *error = NULL;
 
-	g_print( "on_widget_activate() with %s\n", text );
-
 	/* nothing to do */
 	if( text == NULL || *text == '\0' )
 		return;
@@ -184,8 +178,6 @@ gr_window_init(
 	GtkEventControllerKey *event_key;
 	GtkBox *box;
 
-	g_print( "gr_window_init()\n" );
-
 	/* setup window */
 	gtk_window_set_title( GTK_WINDOW( self ), PROGRAM_NAME );
 	gtk_window_set_resizable( GTK_WINDOW( self ), FALSE );
@@ -229,8 +221,6 @@ gr_window_new(
 	GrApplication *app )
 {
 	g_return_val_if_fail( GR_IS_APPLICATION( app ), NULL );
-
-	g_print( "gr_window_new()\n" );
 
 	return GR_WINDOW( g_object_new( GR_TYPE_WINDOW, "application", app, NULL ) );
 }

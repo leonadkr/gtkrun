@@ -95,8 +95,6 @@ gr_application_init(
 
 	self->window = NULL;
 	self->com_list = NULL;
-
-	g_print( "gr_application_init()\n" );
 }
 
 static void
@@ -175,8 +173,6 @@ gr_application_startup(
 {
 	GrApplication *self = GR_APPLICATION( app );
 
-	g_print( "gr_application_startup()\n" );
-
 	G_APPLICATION_CLASS( gr_application_parent_class )->startup( app );
 
 	/* create command list */
@@ -194,8 +190,6 @@ gr_application_activate(
 	GApplication *app )
 {
 	GrApplication *self = GR_APPLICATION( app );
-
-	g_print( "gr_application_activate()\n" );
 
 	G_APPLICATION_CLASS( gr_application_parent_class )->activate( app );
 
@@ -277,8 +271,6 @@ gr_application_handle_local_options(
 {
 	GrApplication *self = GR_APPLICATION( app );
 	gchar *config_path, *history_path;
-
-	g_print( "gr_application_handle_local_options()\n" );
 
 	g_variant_dict_lookup( options, "no-config", "b", &self->no_config );
 

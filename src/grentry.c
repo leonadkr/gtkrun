@@ -56,8 +56,6 @@ gr_entry_set_compared_text(
 
 	g_return_if_fail( GR_IS_ENTRY( self ) );
 
-	g_print( "gr_entry_set_compared_text()\n" );
-
 	/* no list, do noting */
 	if( self->com_list == NULL )
 		return;
@@ -85,7 +83,6 @@ on_editable_insert_text(
 	g_signal_handler_block( G_OBJECT( self ), entry->insert_text_handler_id );
 	g_signal_handler_block( G_OBJECT( self ), entry->delete_text_handler_id );
 
-	g_print( "on_editable_insert_text()\n" );
 	gr_entry_set_compared_text( entry, *position );
 
 	g_signal_handler_unblock( G_OBJECT( self ), entry->insert_text_handler_id );
@@ -106,7 +103,6 @@ on_editable_delete_text(
 	g_signal_handler_block( G_OBJECT( self ), entry->insert_text_handler_id );
 	g_signal_handler_block( G_OBJECT( self ), entry->delete_text_handler_id );
 
-	g_print( "on_editable_delete_text()\n" );
 	gr_entry_set_compared_text( entry, start_pos );
 
 	g_signal_handler_unblock( G_OBJECT( self ), entry->insert_text_handler_id );

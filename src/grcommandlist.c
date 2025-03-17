@@ -43,8 +43,6 @@ gr_command_list_load_history_array(
 
 	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
 
-	g_print( "gr_command_list_load_history_array()\n" );
-
 	/* if the file cannot be loaded, do nothing */
 	if( self->his_file_path == NULL )
 		return;
@@ -88,8 +86,6 @@ gr_command_list_load_environment_binaries_list(
 	GSList *list;
 
 	g_return_val_if_fail( env_path != NULL, NULL );
-
-	g_print( "gr_command_list_load_environment_binaries_list()\n" );
 
 	env_str = g_getenv( env_path );
 	if( env_str == NULL )
@@ -144,8 +140,6 @@ gr_command_list_finalize(
 	GObject *object )
 {
 	GrCommandList *self = GR_COMMAND_LIST( object );
-
-	g_print( "gr_command_list_finalize()\n" );
 
 	g_free( self->his_file_path );
 	g_strfreev( self->his_arr );
@@ -229,8 +223,6 @@ GrCommandList*
 gr_command_list_new(
 	const gchar *his_file_path )
 {
-	g_print( "gr_command_list_new()\n" );
-
 	return GR_COMMAND_LIST( g_object_new( GR_TYPE_COMMAND_LIST, "history-file-path", his_file_path, NULL ) );
 }
 
@@ -249,8 +241,6 @@ gr_command_list_set_history_file_path(
 	const gchar *path )
 {
 	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
-
-	g_print( "gr_command_list_set_history_file_path()\n" );
 
 	g_object_freeze_notify( G_OBJECT( self ) );
 
@@ -272,8 +262,6 @@ gr_command_list_get_compared_string(
 	GStrv a;
 	GSList *l;
 	gint res;
-
-	g_print( "gr_command_list_get_compared_string()\n" );
 
 	g_return_val_if_fail( GR_IS_COMMAND_LIST( self ), NULL );
 
@@ -309,8 +297,6 @@ gr_command_list_get_compared_array(
 	GStrv arr, a;
 	GSList *l, *list;
 	gint res;
-
-	g_print( "gr_command_list_get_compared_array()\n" );
 
 	g_return_val_if_fail( GR_IS_COMMAND_LIST( self ), NULL );
 
@@ -366,8 +352,6 @@ gr_command_list_push(
 	gchar *s_locale, *s_utf8;
 	gsize s_locale_len;
 	GError *error = NULL;
-
-	g_print( "gr_command_list_push()\n" );
 
 	g_return_if_fail( GR_IS_COMMAND_LIST( self ) );
 
