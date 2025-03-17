@@ -7,17 +7,17 @@
 .B @PROGRAM_NAME@
 launches applications in a graphical environment supported by GTK4. Just run
 .B @PROGRAM_NAME@
-when you are in X or Wayland (not tested). At start the program scans the cache file (if
-.B --no-cache
+when you are in X or Wayland (not tested). At start the program scans the history file (if
+.B --no-history
 is not set) and the environment variable
 .I $PATH
-for binary directories. In cache directory it creates cache files. One of them (
-.B @PROGRAM_COMMANDS_LIST_FILE@
-) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (
-.B @PROGRAM_ENVIRONMENT_CACHE_FILE@
-) includes data from
-.I $PATH
-, you can not modify it, but freely remove, it will be created at the next start.
+for binary directories. If
+.B --no-history
+is not set, the program creates the history file (
+.B "$XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_HISTORY_FILE@"
+or
+.B "$HOME/.cache/@PROGRAM_NAME@/@PROGRAM_HISTORY_FILE@"
+) containing the list of recently executed commands. It is a simple text file, you can modify it freely.
 .PP
 Start typing and the program will complete your command. Press
 .I [Tab]
@@ -59,58 +59,40 @@ is ignored. The window will adjust height, but not bigger than
 .RE
 .P
 .BR \-a ,
-.B \-\-cache-dir
-.I CACHE_DIR
+.B \-\-history-path
+.I HISTORY_PATH
 .RS 4
-Set path to the cache directory. If not set, the program uses default:
-.IR "$XDG_CACHE_HOME/@PROGRAM_NAME@" " or " "$HOME/.cache/@PROGRAM_NAME@" .
+Set path to the history file. If not set, the program uses default:
+.IR "$XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_HISTORY_FILE@" " or " "$HOME/.cache/@PROGRAM_NAME@/@PROGRAM_HISTORY_FILE@" .
 .RE
 .P
 .BR \-A ,
-.B \-\-no\-cache
+.B \-\-no\-history
 .RS 4
-Do not use any cache file.
+Do not use any history file.
 .RE
 .P
-.BR \-o ,
+.BR \-c ,
 .B \-\-config
 .I CONFIG_PATH
 .RS 4
 Set path to the configure file. If not set, the program uses default:
-.IR "$XDG_CONFIG_HOME/@PROGRAM_NAME@/config" " or " "$HOME/.config/@PROGRAM_NAME@/config" .
+.IR "$XDG_CONFIG_HOME/@PROGRAM_NAME@/@PROGRAM_CONFIGURE_FILE@" " or " "$HOME/.config/@PROGRAM_NAME@/@PROGRAM_CONFIGURE_FILE@" .
 .RE
 .P
-.BR \-O ,
+.BR \-C ,
 .B \-\-no\-config
 .RS 4
 Do not use any configure file.
 .RE
-.P
-.BR \-c ,
-.B \-\-conceal
-.RS 4
-Start the program in "conceal mode". The window will not show.
-.RE
-.P
-.BR \-e ,
-.B \-\-exhibit
-.RS 4
-In "conceal mode" show the program's window.
-.RE
-.P
-.BR \-k ,
-.B \-\-kill
-.RS 4
-Kill the program in "conceal mode".
-.RE
 .SH CUSTOM CONFIG
-You may create the textual config file
-.I $XDG_CONFIG_HOME/@PROGRAM_NAME@/config
+You may create the textual configure file
+.I $XDG_CONFIG_HOME/@PROGRAM_NAME@/@PROGRAM_CONFIGURE_FILE@
 (or
-.I $HOME/.config/@PROGRAM_NAME@/config
+.I $HOME/.config/@PROGRAM_NAME@/@PROGRAM_CONFIGURE_FILE@
 ), that will be scanned at the program start, or set
 .B \-\-no-config
-argument to ignore the config file. Arguments added to the program will overwrite appropriate config lines.
+argument to ignore the configure file. Arguments added to the program will overwrite appropriate configure lines.
 .P
 Custom config example:
 .P
@@ -119,47 +101,24 @@ Custom config example:
 [Main]
 silent = false
 width = 400
-height = 400
-max_height = 400
-cache-dir = /path/to/cache/directory
-no_cache = false
-conceal = false
+height = 200
+max_height = 200
+history-path = /path/to/history/file
+no-history = false
 .EE
-.SH CONCEAL MODE
-The program supports "conceal mode" with arguments
-.BR \-\-conceal " or " \-c ,
-that means the program will start normal, but will not show the window. To use the program in this mode you should run the same program with special arguments, it will send commands to the primary program via DBus.
-.P
-For example, run the program in "conceal mode" with
-.BR "@PROGRAM_NAME@ --conceal" ,
-then run
-.B "@PROGRAM_NAME@ --exhibit"
-to make the window visible. Now use the program normally and press
-.IR "[Esc]" " or " "[Enter]" ,
-the program will not terminate, just the window will be invisible. Run
-.BR "gtk --exhibit" ,
-and the window will be exhibited again to use the program as usual.
-.P
-To kill the program in "conceal mode" type and run
-.BR "@PROGRAM_NAME@ --kill" "."
 .SH FILES
-.IR $XDG_CONFIG_HOME/@PROGRAM_NAME@/config ", " $HOME/.config/@PROGRAM_NAME@/config
+.IR $XDG_CONFIG_HOME/@PROGRAM_NAME@/@PROGRAM_CONFIGURE_FILE@ ", " $HOME/.config/@PROGRAM_NAME@/@PROGRAM_CONFIGURE_FILE@
 .RS 4
 stores configuration of the program, read at start if
 .B \-\-no-config
 is not set; 
 .RE
 .P
-.IR $XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_COMMANDS_LIST_FILE@ ", " $HOME/.cache/@PROGRAM_NAME@/@PROGRAM_COMMANDS_LIST_FILE@
+.IR $XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_HISTORY_FILE@ ", " $HOME/.cache/@PROGRAM_NAME@/@PROGRAM_HISTORY_FILE@
 .RS 4
-stores recently executed commands, you can freely modify this textual file;
-.RE
-.P
-.IR $XDG_CACHE_HOME/@PROGRAM_NAME@/@PROGRAM_ENVIRONMENT_CACHE_FILE@ ", " $HOME/.cache/@PROGRAM_NAME@/@PROGRAM_ENVIRONMENT_CACHE_FILE@
-.RS 4
-stores binary data from
-.IR $PATH ,
-can not be modified, but freely removed, it will be created at start;
+stores recently executed commands, read at start if
+.B \-\-no-history
+is not set, you can freely modify this textual file;
 .RE
 .SH AUTHOR
 @PROGRAM_AUTHOR@

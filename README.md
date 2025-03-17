@@ -5,7 +5,7 @@ This program launches applications in a graphical environment supported by GTK4.
 ### Run
 Just run `gtkrun` when you are in X or Wayland (not tested). You can add some options, `gtkrun --help` will show them.
 
-At start the program scans the cache file (if `no-cache` is not set) and the environment variable `$PATH` for binary directories. In cache directory it creates cache files. One of them (`com.list`) contains the list of recently executed commands, it is a simple text file, you can modify it freely. The second cache file (`env.cache`) includes data from `$PATH`, you can not modify it, but freely remove, it will be created at next start.
+At start the program reads the history file (if `--no-history` is not set) and the environment variable `$PATH` for binary directories. It creates the history file (`$XDG_CACHE_HOME/gtkrun/history` or `$HOME/.cache/gtkrun/history`) containing the list of recently executed commands. It is a simple text file, you can modify it freely.
 
 ### Dialog
 Start typing and the program will complete your command:
@@ -20,25 +20,17 @@ Next just press `[Enter]` to execute command: either from the entry or from the 
 Press `[Esc]` or `[Ctrl-q]` to terminate the program.
 
 ### Custom config
-You may create the textual config file `$XDG_CONFIG_HOME/gtkrun/config` (or `$HOME/.config/gtkrun/config`), that will be scanned at the program start, or set `no-config` argument to ignore the config file. Arguments added to the program will overwrite appropriate config lines.
+You may create the textual configure file `$XDG_CONFIG_HOME/gtkrun/config` (or `$HOME/.config/gtkrun/config`), that will be scanned at the program start, or set `no-config` argument to ignore the configure file. Arguments added to the program will overwrite appropriate configure lines.
 
 Custom config example:
 
 	[Main]
 	silent = false
 	width = 400
-	height = 400
-	max_height = 400
-	cache-dir = /path/to/cache/directory
-	no_cache = false
-	conceal = false
-
-### Conceal mode
-The program supports "conceal mode" with arguments `--conceal` or `-c`, that means the program will start normal, but will not show the window. To use the program in this mode you should run the same program with special arguments, it will send commands to the primary program via DBus.
-
-For example, run the program in "conceal mode" with `gtkrun --conceal`, then run `gtkrun --exhibit` to make the window visible. Now use the program normally and press `[Esc]` or `Enter`, the program will not terminate, just the window will be invisible. Run `gtk --exhibit`, and the window will be exhibited again to use the program as usual.
-
-To kill the program in "conceal mode" type and run `gtkrun --kill`.
+	height = 200
+	max_height = 200
+	history-path = /path/to/history/file
+	no-history = false
 
 ## Build and install
 
