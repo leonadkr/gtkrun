@@ -48,11 +48,12 @@ Run-time dependencies:
 To build:
 
 ```
-cmake -S gtkrun -B /tmp/gtkrun/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_TOOLCHAIN_FILE=GlibToolChain.cmake
+cmake -S gtkrun -B gtkrun/build -DMAIN_WINDOW_WIDTH=400 -DMAIN_WINDOW_HEIGHT=200 --preset release
+cmake --build gtkrun/build
 ```
 
 To install:
 
 ```
-DESTDIR=$HOME/.local cmake --build /tmp/gtkrun/release --config Release --target install
+cmake --install gtkrun/build --prefix gtkrun/install
 ```

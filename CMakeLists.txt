@@ -1,9 +1,9 @@
-cmake_minimum_required( VERSION 3.16 )
+cmake_minimum_required( VERSION 4.1 )
 
 project( gtkrun VERSION 1.2.0 )
 
-set( PROGRAM_NAME ${CMAKE_PROJECT_NAME} )
-set( PROGRAM_VERSION ${CMAKE_PROJECT_VERSION} )
+set( PROGRAM_NAME ${PROJECT_NAME} )
+set( PROGRAM_VERSION ${PROJECT_VERSION} )
 set( PROGRAM_APP_ID "com.github.leonadkr.gtkrun" )
 string( TIMESTAMP PROGRAM_TIMESTAMP "%Y-%m-%d" )
 set( PROGRAM_AUTHOR "leonadkr@gmail.com" )
@@ -18,9 +18,15 @@ else()
 	set( PROGRAM_LINE_BREAKER "\\n" )
 endif()
 
-set( PROGRAM_WINDOW_WIDTH "400" )
-set( PROGRAM_WINDOW_HEIGHT "200" )
-set( PROGRAM_WINDOW_MAX_HEIGHT ${PROGRAM_WINDOW_HEIGHT} )
+if( NOT DEFINED MAIN_WINDOW_WIDTH )
+	set( MAIN_WINDOW_WIDTH 400 )
+endif()
+
+if( NOT DEFINED MAIN_WINDOW_HEIGHT )
+	set( MAIN_WINDOW_HEIGHT 200 )
+endif()
+
+set( MAIN_WINDOW_MAX_HEIGHT ${MAIN_WINDOW_HEIGHT} )
 
 configure_file( config.h.in config.h )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )

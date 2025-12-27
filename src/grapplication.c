@@ -80,9 +80,9 @@ gr_application_init(
 	history_filename = g_filename_from_utf8( PROGRAM_HISTORY_FILE, -1, NULL, NULL, NULL );
 
 	self->silent = FALSE;
-	self->width = PROGRAM_WINDOW_WIDTH;
-	self->height = PROGRAM_WINDOW_HEIGHT;
-	self->max_height = PROGRAM_WINDOW_MAX_HEIGHT;
+	self->width = MAIN_WINDOW_WIDTH;
+	self->height = MAIN_WINDOW_HEIGHT;
+	self->max_height = MAIN_WINDOW_MAX_HEIGHT;
 	self->max_height_set = FALSE;
 	self->history_path = g_build_filename( g_get_user_cache_dir(), program_name, history_filename, NULL );
 	self->no_history = FALSE;
