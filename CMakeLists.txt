@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 4.1 )
 
-project( gtkrun VERSION 1.2.0 )
+project( gtkrun VERSION 1.2.1 )
 
 set( PROGRAM_NAME ${PROJECT_NAME} )
 set( PROGRAM_VERSION ${PROJECT_VERSION} )
